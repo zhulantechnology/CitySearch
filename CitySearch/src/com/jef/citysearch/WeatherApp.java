@@ -11,7 +11,6 @@ public class WeatherApp extends Application {
 	public void onCreate() {
 		// TODO Auto-generated method stub
 		super.onCreate();
-		Log.e("XXX", "WeatherApp------------onCreate");
 		mModel = WeatherModel.getInstance(getApplicationContext());
 		mModel.init();
 		

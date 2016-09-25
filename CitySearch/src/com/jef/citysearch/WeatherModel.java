@@ -21,13 +21,11 @@ public class WeatherModel {
 		if(null == INSTANCE) {
 			INSTANCE = new WeatherModel(app);
 		}
-		Log.e("XXX", "WeatherModel------------getInstance");
 		return INSTANCE;
 	}
 	
 	private WeatherModel(Context app) {
 		mApp = app;
-		Log.e("XXX", "WeatherModel------------");
 		mInternetWorker = InternetWorker.getInstance(mApp);
 
 		mInternetWorker.setCallBacks(mInternetCallBacks);
@@ -50,7 +48,6 @@ public class WeatherModel {
 		loadWeatherInfos();
 		loadGpsCityInfos();
 		mInternetWorker.init();*/
-		Log.e("XXX", "WeatherModel------------init");
 		inited = true;
 	}
 	

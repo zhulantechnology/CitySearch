@@ -23,7 +23,6 @@ public class WebAccessTools {
 	
 	public String getWebContent(String url) {
 		if (!Utils.isNetworkAvailable(context)) {
-			Log.e("XXX","WebAccessTools------no network!");
 			return null;
 		}
 		
@@ -41,7 +40,6 @@ public class WebAccessTools {
 				String content = EntityUtils.toString(response.getEntity());
 				return content;
 			} else {
-				Log.e("XXX", "wangjun-----------------internet failed");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

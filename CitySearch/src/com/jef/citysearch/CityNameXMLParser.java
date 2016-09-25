@@ -55,22 +55,115 @@ public class CityNameXMLParser extends DefaultHandler {
 	@Override
 	public void startElement(String uri, String localName, String qName,
 			Attributes attributes) throws SAXException {
-		// TODO Auto-generated method stub
-		super.startElement(uri, localName, qName, attributes);
-	}
+				super.startElement(uri, localName, qName, attributes);
+				skip = false;
+				if (TAG_CITY.equals(localName)) {
+					cityInfo = new CityInfo();
+				} else if (TAG_ADMIN1.equals(localName) || TAG_ADMIN2.equals(localName)
+						|| TAG_ADMIN3.equals(localName)) {
+					if (attributes == null || attributes.getLength() == 0) {
+						skip = true;
+					}
+				} else if(TAG_SOUTHWEST.equals(localName)) {
+					isSouthWest = true;
+				} else if (TAG_NORTHEAST.equals(localName)) {
+					isNorthEast = true;
+				}
+			}
 
 	@Override
 	public void endElement(String uri, String localName, String qName)
 			throws SAXException {
-		// TODO Auto-generated method stub
-		super.endElement(uri, localName, qName);
-	}
+				super.endElement(uri, localName, qName);
+				if (TAG_WOEID.equals(localName)) {
+					cityInfo.setWoeid(content);
+				} else if (TAG_COUNTRY.equals(localName)) {
+					cityInfo.setCountry(content);
+				} else if (TAG_ADMIN1.equals(localName)) {
+					if(skip) {
+						cityInfo.setAdmin1("");
+					} else {
+						cityInfo.setAdmin1(content);
+					}
+				} else if (TAG_ADMIN2.equals(localName)) {
+					if(skip) {
+						cityInfo.setAdmin2("");
+					} else {
+						cityInfo.setAdmin2(content);
+					}
+				} else if (TAG_ADMIN3.equals(localName)) {
+					if(skip) {
+						cityInfo.setAdmin3("");
+					} else {
+						cityInfo.setAdmin3(content);
+					}
+				} else if (TAG_NAME.equals(localName)) {
+					cityInfo.setName(content);
+				} else if(TAG_SOUTHWEST.equals(localName)) {
+					isSouthWest = false;
+				} else if (TAG_NORTHEAST.equals(localName)) {
+					isNorthEast = false;
+				} else if (TAG_LAT.equals(localName)) {
+					if(isSouthWest) {
+					//	cityInfo.getLocationInfo().setSouthWestLat(content);
+					} else if(isNorthEast) {
+					//	cityInfo.getLocationInfo().setNorthEastLat(content);
+					}
+				} else if (TAG_LON.equals(localName)) {
+					if(isSouthWest) {
+					//	cityInfo.getLocationInfo().setSouthWestLon(content);
+					} else if(isNorthEast) {
+					//	cityInfo.getLocationInfo().setNorthEastLon(content);
+					}
+				} else if (TAG_CITY.equals(localName)) {
+					mCityInfoLit.add(cityInfo);
+				}
+			}
 
 	@Override
 	public void characters(char[] ch, int start, int length)
 			throws SAXException {
 		// TODO Auto-generated method stub
 		super.characters(ch, start, length);
+		content = new String(ch, start, length);
 	}
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

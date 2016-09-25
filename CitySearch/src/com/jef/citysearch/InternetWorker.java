@@ -15,6 +15,7 @@ import org.xml.sax.XMLReader;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.provider.CalendarContract.Instances;
+import android.util.Log;
 
 public class InternetWorker {
 	
@@ -112,7 +113,6 @@ public class InternetWorker {
 		}
 		
 		mCityInfos.clear();
-		
 		SAXParserFactory mSaxParserFactory = SAXParserFactory.newInstance();
 		try {
 			SAXParser mSaxParser = mSaxParserFactory.newSAXParser();

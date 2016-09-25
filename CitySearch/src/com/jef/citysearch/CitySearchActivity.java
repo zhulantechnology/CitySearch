@@ -26,7 +26,6 @@ public class CitySearchActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Log.e("XXX", "CitySearchActivity------------onCreate");
 		
 		setContentView(R.layout.activity_city_search);
 		mCityInfos = WeatherApp.mModel.getCityInfos();
@@ -53,6 +52,7 @@ public class CitySearchActivity extends Activity {
 		});
 
 		loadProgressView = findViewById(R.id.loading_progress_view);
+		cityList = (ListView) findViewById(R.id.city_list);
 	}
 	
 	private void searchCity() {
