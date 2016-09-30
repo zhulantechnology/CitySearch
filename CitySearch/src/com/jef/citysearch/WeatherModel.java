@@ -43,6 +43,18 @@ public class WeatherModel {
 		
 	};
 	
+	public void stopQueryCity() {
+		mInternetWorker.stopQueryCity();
+	}
+	
+	public boolean addWeatherByCity(CityInfo info, boolean isGps) {
+		WeatherInfo weatherInfo = new WeatherInfo();
+		weatherInfo.setWoeid(info.getWoeid());
+		weatherInfo.setName(info.getName());
+		weatherInfo.setGps(isGps);
+		return mInternetWorker.queryWeather(weatherInfo);
+	}
+	
 	public void init() {
 /*		Log.d(TAG, "init");
 		loadWeatherInfos();

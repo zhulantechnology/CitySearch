@@ -1,0 +1,261 @@
+package com.jef.citysearch;
+
+import android.R.integer;
+import android.content.ContentProvider;
+import android.content.ContentUris;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.UriMatcher;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabase.CursorFactory;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.net.Uri;
+import android.util.Log;
+
+public class WeatherProvider extends ContentProvider {
+	
+	private static final String AUTHORITIES = "com.jef.citysearch.weather";
+	private static final String TABLE_WEATHER = "gweather";
+	private static final String TABLE_CITY = "gcity";
+	
+	private static final int WEATHER = 1;
+	private static final int ITEM = 2;
+	private static final int CITY = 3;
+	private static final int CITY_ITEM = 4;
+	
+	private DBHelper dbHelper;
+	
+	
+	private static UriMatcher uriMatcher;
+	static {
+		uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+		uriMatcher.addURI(AUTHORITIES, "gweather", WEATHER);
+		uriMatcher.addURI(AUTHORITIES, "gweather/#", ITEM);
+		uriMatcher.addURI(AUTHORITIES, "gcity", CITY);
+		uriMatcher.addURI(AUTHORITIES, "gcity/#", CITY_ITEM);
+	}
+	
+	
+	@Override
+	public boolean onCreate() {
+		dbHelper = new DBHelper(getContext());
+		Log.e("XXX", "WANGJUN-------------------WeatherProvider");
+		return true;
+	}
+
+	@Override
+	public Cursor query(Uri uri, String[] projection, String selection,
+			String[] selectionArgs, String sortOrder) {
+		SQLiteDatabase database = dbHelper.getReadableDatabase();
+		switch (uriMatcher.match(uri)) {
+		case WEATHER:
+			return database.query(TABLE_WEATHER, projection, selection, selectionArgs,
+					null, null, sortOrder);
+		case ITEM:{
+			long id = ContentUris.parseId(uri);
+			String where = "_id = " + id;
+			if (selection != null && !"".equals(selection)) {
+				where = selection + " and " + where;
+			}
+			return database.query(TABLE_WEATHER, projection, selection, selectionArgs,
+					null, null, sortOrder);
+		}
+		case CITY:
+			return database.query(TABLE_CITY, projection, selection, selectionArgs,
+					null, null, sortOrder);
+		case CITY_ITEM:{
+			long id = ContentUris.parseId(uri);
+			String where = "_id = " + id;
+			if (selection != null && !"".equals(selection)) {
+				where = selection + " and " + where;
+			}
+			return database.query(TABLE_CITY, projection, where, selectionArgs,
+					null, null, sortOrder);
+		}
+		default:
+			throw new IllegalArgumentException("Unknow Uri:" + uri);
+		}
+		
+	}
+
+	@Override
+	public String getType(Uri uri) {
+		switch (uriMatcher.match(uri)) {
+		case WEATHER:
+			return AUTHORITIES + "/gweather";
+		case ITEM:
+			return AUTHORITIES + "/gweather";
+		case CITY:
+			return AUTHORITIES + "/gcity";
+		case CITY_ITEM:
+			return AUTHORITIES + "/gcity";
+
+		default:
+			throw new IllegalArgumentException("Unknown Uri: " + uri);
+		}
+	}
+
+	@Override
+	public Uri insert(Uri uri, ContentValues values) {
+		SQLiteDatabase db = dbHelper.getWritableDatabase();
+		switch (uriMatcher.match(uri)) {
+		case WEATHER: {
+			long rowId = db.insert(TABLE_WEATHER, null, values);
+			if (rowId < 0) {
+				throw new SQLiteException("Unable to insert " + values + " for "+ uri);
+			}
+			
+			Uri insertUri = ContentUris.withAppendedId(uri, rowId);
+			getContext().getContentResolver().notifyChange(insertUri, null);
+			return insertUri;
+		}
+		case CITY:{
+			long rowId = db.insert(TABLE_CITY, null, values);
+			if (rowId < 0) {
+				throw new SQLiteException("Unable to insert " + values + " for "+ uri);
+			}
+			
+			Uri insertUri = ContentUris.withAppendedId(uri, rowId);
+			getContext().getContentResolver().notifyChange(insertUri, null);
+			return insertUri;
+		}
+		default:
+			throw new IllegalArgumentException("Unknow Uri: " + uri);
+		}
+	}
+
+	@Override
+	public int delete(Uri uri, String selection, String[] selectionArgs) {
+		SQLiteDatabase db = dbHelper.getWritableDatabase();
+		int count = 0;
+		switch (uriMatcher.match(uri)) {
+		case WEATHER:
+			count = db.delete(TABLE_WEATHER, selection, selectionArgs);
+			return count;
+		case ITEM:
+			long id = ContentUris.parseId(uri);
+			String where = "_id = " + id;
+			count = db.delete(TABLE_WEATHER, where, selectionArgs);
+			return count;
+		case CITY:
+			count = db.delete(TABLE_CITY, selection, selectionArgs);
+			return count;
+		default:
+			break;
+		}
+		return count;
+	}
+
+	@Override
+	public int update(Uri uri, ContentValues values, String selection,
+			String[] selectionArgs) {
+		SQLiteDatabase db = dbHelper.getWritableDatabase();
+		int count = 0;
+		switch (uriMatcher.match(uri)) {
+		case WEATHER:
+			count = db.update(TABLE_WEATHER, values, selection, selectionArgs);
+			return count;
+		case ITEM:
+			long id = ContentUris.parseId(uri);
+			String where = "_id = " + id;
+			if (selection != null && !"".equals(selection)) {
+				where = selection + " and " + where;
+			}
+			count = db.update(TABLE_WEATHER, values, where, selectionArgs);
+			return count;
+		case CITY:
+			count = db.update(TABLE_CITY, values, selection, selectionArgs);
+			return count;
+		default:
+			throw new IllegalArgumentException("Unknow Uri: " + uri);
+		}
+	}
+
+	class DBHelper extends SQLiteOpenHelper {
+
+		private static final String DATABASE_NAME = "gweather.db";
+		private static final int DATEBASE_VERSION_STRING = 1;
+		
+		public DBHelper(Context context) {
+			super(context, DATABASE_NAME, null, DATEBASE_VERSION_STRING);
+			// TODO Auto-generated constructor stub
+			Log.e("XXX", "WANGJUN-------------------DBHelper");
+		}
+
+		@Override
+		public void onCreate(SQLiteDatabase db) {
+			Log.e("XXX", "WANGJUN-------------------DBHelper---onCreate");
+			db.execSQL("CREATE TABLE " + TABLE_WEATHER + "("
+					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+					+ "gIndex INTEGER,"
+					+ "woeid TEXT NOT NULL,"
+					+ "name TEXT,"
+					+ "code TEXT NOT NULL,"
+					+ "date TEXT,"
+					+ "day TEXT,"
+					+ "tmp TEXT,"
+					+ "high TEXT,"
+					+ "low TEXT,"
+					+ "text TEXT,"
+					+ "isGps INTEGER DEFAULT '0',"
+					+ "updateTime INTEGER);"
+					);
+			db.execSQL("CREATE TABLE " + TABLE_CITY + "("
+					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+					+ "woeid TEXT NOT NULL,"
+					+ "name TEXT NOT NULL,"
+					+ "lat TEXT,"
+					+ "lon TEXT,"
+					+ "southWestLat TEXT,"
+					+ "southWestLon TEXT,"
+					+ "northEastLat TEXT,"
+					+ "northEastLon TEXT);"
+					);
+			
+		}
+
+		@Override
+		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+			db.execSQL("DROP TABLE IF EXISTS gweather");
+			db.execSQL("DROP TABLE IF EXISTS gcity");
+			onCreate(db);
+		}
+		
+	}
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

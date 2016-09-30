@@ -18,18 +18,32 @@ import android.provider.CalendarContract.Instances;
 import android.util.Log;
 
 public class InternetWorker {
+	private static final String URL_QUERY_WEATHER_PART1 = "http://query.yahooapis.com/v1/public/yql?q=select+*+from+weather.forecast+where+woeid=";
+	private static final String URL_QUERY_WEATHER_PART2 = "+and+u='c'";
 	
 	private static final String URL_QUERY_CITY_PART1 = "http://query.yahooapis.com/v1/public/yql?q=select+*+from+geo.places+where+text='";
-	private static final String URL_QUERY_CITY_PART2 ="*'+and+lang='en-US'";
+	//private static final String URL_QUERY_CITY_PART2 ="*'+and+lang='en-US'";
+	private static final String URL_QUERY_CITY_PART2 ="*'+and+lang='zh-CN'";
 	private Context mContext;
 			
 	enum State{
 		IDLE, WORK_WEATHER, WORK_CITY, WORK_LOCATION
 	};
+	
+	enum QueryWeatherType {
+		CURRENT, ALL, ADD_NEW
+	}
+	
+	private QueryWeatherType mQueryWeatherType = QueryWeatherType.CURRENT;
+	private List<WeatherInfo> mWeatherInfoList;
+	private WeatherInfo tempWeatherInfo;
 
 	private State mState = State.IDLE;
 	private QueryCityTask mQueryCityTask;
 	private static InternetWorker INSTANCE;
+	
+	private int updateWeatherCount = 0;
+	private int updateFinishedWeatherCount = 0;
 	
 	private InternetWorker(Context context) {
 		mContext = context;
@@ -128,6 +142,59 @@ public class InternetWorker {
 		} catch (SAXException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public boolean queryWeather(WeatherInfo info) {
+		if (mState == State.IDLE) {
+			mState = State.WORK_WEATHER;
+			mQueryWeatherType = QueryWeatherType.ADD_NEW;
+			updateWeatherCount = 1;
+			updateFinishedWeatherCount = 0;
+			
+			if (null != mQueryWeatherTask 
+					&& mQueryWeatherTask.getStatus() == AsyncTask.Status.RUNNING) {
+				mQueryWeatherTask.cancel(true);
+			}
+		
+		}
+	}
+	
+	class QueryWeatherTask extends AsyncTask<Void, Void, Void> {
+		private WeatherInfo mwWeatherInfo;
+		public QueryWeatherTask(WeatherInfo weatherInfo) {
+			mwWeatherInfo = weatherInfo;
+		}
+		@Override
+		protected Void doInBackground(Void... params) {
+			String url = URL_QUERY_WEATHER_PART1 + mwWeatherInfo.getWoeid()
+					+ URL_QUERY_WEATHER_PART2;
+			String content = new WebAccessTools(mContext).getWebContent(url);
+			parseWeather(content, mwWeatherInfo);
+			return null;
+		}
+		
+	}
+	
+	private void parseWeather(String content, WeatherInfo mwWeatherInfo) {
+		if (content == null || content.isEmpty()) {
+			tempWeatherInfo = new WeatherInfo();
+			tempWeatherInfo.getForecasts().clear();
+			return;
+		}
+		
+		tempWeatherInfo = new WeatherInfo();
+		
+		SAXParserFactory mSaxParserFactory = SAXParserFactory.newInstance();
+		try {
+			SAXParser mSaxParser = mSaxParserFactory.newSAXParser();
+			XMLReader mXmlReader = mSaxParser.getXMLReader();
+			Weat
+		} catch (ParserConfigurationException e) {
+			// TODO: handle exception
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
