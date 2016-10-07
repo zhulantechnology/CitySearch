@@ -7,6 +7,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import android.app.Notification.Style;
+import android.util.Log;
 
 public class CityNameXMLParser extends DefaultHandler {
 	
@@ -56,6 +57,7 @@ public class CityNameXMLParser extends DefaultHandler {
 	public void startElement(String uri, String localName, String qName,
 			Attributes attributes) throws SAXException {
 				super.startElement(uri, localName, qName, attributes);
+				Log.e("XXX","wangjun----------startElement-");
 				skip = false;
 				if (TAG_CITY.equals(localName)) {
 					cityInfo = new CityInfo();
@@ -75,6 +77,7 @@ public class CityNameXMLParser extends DefaultHandler {
 	public void endElement(String uri, String localName, String qName)
 			throws SAXException {
 				super.endElement(uri, localName, qName);
+				Log.e("XXX","wangjun----------endElement-");
 				if (TAG_WOEID.equals(localName)) {
 					cityInfo.setWoeid(content);
 				} else if (TAG_COUNTRY.equals(localName)) {

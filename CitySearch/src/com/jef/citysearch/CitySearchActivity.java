@@ -41,6 +41,8 @@ public class CitySearchActivity extends Activity {
 			public void onClick(View v) {
 				if (Utils.isNetworkAvailable(CitySearchActivity.this)) {
 					searchCity();
+					Log.e("XXX","wangjun-----searchCity---start");
+					cityList.setVisibility(View.VISIBLE);// wangjun add
 				} else {
 					Toast.makeText(CitySearchActivity.this,
 							R.string.toast_net_inavailable, Toast.LENGTH_SHORT)
@@ -61,6 +63,7 @@ public class CitySearchActivity extends Activity {
 					int position, long id) {
 				int length = mCityInfos.size();
 				if (position < length) {
+					Log.e("XXX","wangjun-----position---" + position);
 					addCity(mCityInfos.get(position));
 				}
 				
@@ -73,13 +76,18 @@ public class CitySearchActivity extends Activity {
 		cityList.setVisibility(View.GONE);
 		
 		showLoadingProgress(true);
-		if (!WeatherApp.mModel.addWeatherByCity(info, false)) {
+		//Log.e("XXX","addWeatherByCity-------"
+		//	+ WeatherApp.mModel.addWeatherByCity(info, false));
+		if (WeatherApp.mModel.addWeatherByCity(info, false)) {
+			Log.e("XXX","addCity-------set dialog false");
 			showLoadingProgress(false);
 		}
+
 	}
 	
 	private void searchCity() {
 		String name = cityName.getText().toString();
+		Log.e("XXX","wangjun-----searchCity---name---" + name);
 		if (name.isEmpty()) {
 			// Any toast?
 		} else {

@@ -20,8 +20,8 @@
     </style>
 
     <!-- Application theme. -->
-    <style name="AppTheme" parent="AppBaseTheme">
-        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+    <style name="AppTheme" parent="android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowTranslucentStatus">true</item>
+        <!--item name="android:windowTranslucentNavigation">true</item-->
     </style>
-
 </resources>

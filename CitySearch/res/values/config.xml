@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_woeid" translatable="false">2211027</string>
+    <string name="default_city_name" translatable="false">Islamabad</string>
+    <string name="default_refresh_time" translatable="false">20160101000000</string>
+</resources>

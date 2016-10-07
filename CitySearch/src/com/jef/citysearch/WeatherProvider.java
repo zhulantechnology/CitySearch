@@ -25,6 +25,34 @@ public class WeatherProvider extends ContentProvider {
 	private static final int CITY = 3;
 	private static final int CITY_ITEM = 4;
 	
+	public static final int DEFAULT_CITY = 666;
+	public static final int CONDITION_INDEX = -1;
+	public static final int FLAG_GPS = 2333;
+	
+	public static final String INDEX = "gIndex";
+	public static final String WOEID = "woeid";
+	public static final String NAME = "name";
+	public static final String CODE = "code";
+	public static final String DATE = "date";
+	public static final String DAY = "day";
+	public static final String TEMP = "tmp";
+	public static final String HIGH = "high";
+	public static final String LOW = "low";
+	public static final String TEXT = "text";
+	public static final String GPS = "isGps";
+	public static final String UPDATE_TIME = "updateTime";
+	
+	public static final String CITY_WOEID = "woeid";
+	public static final String CITY_NAME = "name";
+	public static final String CITY_LAT = "lat";
+	public static final String CITY_LON = "lon";
+	public static final String CITY_SWLAT = "southWestLat";
+	public static final String CITY_SWLON = "southWestLon";
+	public static final String CITY_NELAT = "northEastLat";
+	public static final String CITY_NELON = "northEastLon";
+	
+	
+	
 	private DBHelper dbHelper;
 	
 	

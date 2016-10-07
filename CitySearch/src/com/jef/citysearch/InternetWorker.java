@@ -25,6 +25,8 @@ public class InternetWorker {
 	//private static final String URL_QUERY_CITY_PART2 ="*'+and+lang='en-US'";
 	private static final String URL_QUERY_CITY_PART2 ="*'+and+lang='zh-CN'";
 	private Context mContext;
+	
+	private QueryWeatherTask mQueryWeatherTask;
 			
 	enum State{
 		IDLE, WORK_WEATHER, WORK_CITY, WORK_LOCATION
@@ -73,7 +75,7 @@ public class InternetWorker {
 			if (null != mQueryCityTask && mQueryCityTask.getStatus() == AsyncTask.Status.RUNNING) {
 				mQueryCityTask.cancel(true);
 			}
-			
+			Log.e("XXX","wangjun-----queryCity---start---");
 			mQueryCityTask = new QueryCityTask(cityInfos);
 			mQueryCityTask.execute(name);
 			return true;
@@ -103,8 +105,11 @@ public class InternetWorker {
 		@Override
 		protected Void doInBackground(String... params) {
 			String url =  URL_QUERY_CITY_PART1 + params[0] + URL_QUERY_CITY_PART2;
+			Log.e("XXX","wangjun-----doInBackground---url---" + url);
 			String content = new WebAccessTools(mContext).getWebContent(url);
+			Log.e("XXX","wangjun-----doInBackground---content---" + content);
 			parseCity(content,mCityInfos);
+			Log.e("XXX","wangjun-----doInBackground---mCityInfos---" + mCityInfos);
 			return null;
 		}
 
@@ -125,7 +130,7 @@ public class InternetWorker {
 		if (null == content || content.isEmpty()) {
 			return;
 		}
-		
+		Log.e("XXX","wangjun--------parseCity---");
 		mCityInfos.clear();
 		SAXParserFactory mSaxParserFactory = SAXParserFactory.newInstance();
 		try {
@@ -146,7 +151,7 @@ public class InternetWorker {
 		}
 	}
 	
-	public boolean queryWeather(WeatherInfo info) {
+	public boolean queryWeather(WeatherInfo weatherInfo) {
 		if (mState == State.IDLE) {
 			mState = State.WORK_WEATHER;
 			mQueryWeatherType = QueryWeatherType.ADD_NEW;
@@ -157,12 +162,18 @@ public class InternetWorker {
 					&& mQueryWeatherTask.getStatus() == AsyncTask.Status.RUNNING) {
 				mQueryWeatherTask.cancel(true);
 			}
-		
+		//Log.e("XXX","queryWeather--------------");
+			mQueryWeatherTask = new QueryWeatherTask(weatherInfo);
+			mQueryWeatherTask.execute();
+			return true;
+		} else {
+			return false;
 		}
 	}
 	
 	class QueryWeatherTask extends AsyncTask<Void, Void, Void> {
 		private WeatherInfo mwWeatherInfo;
+		
 		public QueryWeatherTask(WeatherInfo weatherInfo) {
 			mwWeatherInfo = weatherInfo;
 		}
@@ -170,10 +181,30 @@ public class InternetWorker {
 		protected Void doInBackground(Void... params) {
 			String url = URL_QUERY_WEATHER_PART1 + mwWeatherInfo.getWoeid()
 					+ URL_QUERY_WEATHER_PART2;
+			//Log.e("XXX","QueryWeatherTask----doInBackground-------url----"+ url);
 			String content = new WebAccessTools(mContext).getWebContent(url);
 			parseWeather(content, mwWeatherInfo);
+			//Log.e("XXX","QueryWeatherTask----doInBackground-------mwWeatherInfo----"+ mwWeatherInfo);
 			return null;
 		}
+		@Override
+		protected void onPostExecute(Void result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			
+			if (tempWeatherInfo.getForecasts().size() < 5) {
+				Log.e("XXX", "QueryWeather Failed: " + tempWeatherInfo.getForecasts().size());
+			} else {
+				tempWeatherInfo.setName(mwWeatherInfo.getName());
+				mwWeatherInfo.copyInfo(tempWeatherInfo);
+			}
+			
+			updateFinishedWeatherCount++;
+			
+			mState = State.IDLE;
+		}
+		
+		
 		
 	}
 	
@@ -190,7 +221,17 @@ public class InternetWorker {
 		try {
 			SAXParser mSaxParser = mSaxParserFactory.newSAXParser();
 			XMLReader mXmlReader = mSaxParser.getXMLReader();
-			Weat
+			WeatherXMLParser handler = new WeatherXMLParser(mContext, 
+					tempWeatherInfo, mwWeatherInfo.getWoeid());
+			mXmlReader.setContentHandler(handler);
+			StringReader stringReader = new StringReader(content);
+			InputSource inputSource = new InputSource(stringReader);
+			try {
+				mXmlReader.parse(inputSource);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		} catch (ParserConfigurationException e) {
 			// TODO: handle exception
 		} catch (SAXException e) {
