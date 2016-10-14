@@ -82,15 +82,12 @@ public class WeatherModel {
 
 		@Override
 		public void refreshAllWeatherFinished() {
-		Log.e("XXX", "wangjun-------refreshAllWeatherFinished----0000");
 			for(WeatherInfo info:mWeatherInfoList) {
-				Log.e("XXX", "wangjun-------refreshAllWeatherFinished----1111");
 				updateWeatherInfo(info);
 			}
 			WeatherDataUtil.getInstance().setRefreshTime(mApp, System.currentTimeMillis());
 			Intent intent = new Intent(WeatherAction.ACTION_WEATHER_REFRESHED_ALL);
 			mApp.sendBroadcast(intent);
-			Log.e("XXX", "wangjun-------refreshAllWeatherFinished----2222");
 			//setAutoRefreshAlarm(mApp);
 		}
 		
@@ -293,7 +290,7 @@ public class WeatherModel {
 		Uri uri = Uri.parse(URI_GWEATHER);
 		Cursor cursor = mContentResolver.query(uri, null, "gIndex=?",
 						new String[] { Integer.toString(WeatherProvider.CONDITION_INDEX)}, null);
-		
+		Log.e("XXX", "-----loadWeatherInfos--------cursor------" + cursor);
 		WeatherInfo info;
 		String woeid = "";
 		if (cursor != null) {
@@ -308,7 +305,7 @@ public class WeatherModel {
 			}
 			cursor.close();
 		}
-		
+		Log.e("XXX", "-----loadWeatherInfos--------mWeatherInfoList.size() ------" + mWeatherInfoList.size() );
 		if (mWeatherInfoList.size() == 0) {
 			return;
 		}

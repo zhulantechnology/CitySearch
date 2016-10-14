@@ -21,6 +21,19 @@
             android:orientation="vertical"
             >
             
+            <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="100dp" >
+
+        <TextView
+            android:id="@+id/tv_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="get location..."
+            android:gravity="center"
+            android:layout_marginTop="5dp" />
+    </ScrollView>
+            
             <TextView 
                 android:id="@+id/title"
                 style="@style/title_style"

@@ -197,13 +197,9 @@ public class InternetWorker {
 			}
 			
 			updateFinishedWeatherCount++;
-			Log.e("XXX", "wangjun-------updateFinishedWeatherCount----" + updateFinishedWeatherCount);
-			Log.e("XXX", "wangjun-------updateWeatherCount----" + updateWeatherCount);
 			if (updateFinishedWeatherCount == updateWeatherCount) {
 				
-				Log.e("XXX", "wangjun-------mQueryWeatherType----" + mQueryWeatherType);
 				if (QueryWeatherType.ALL == mQueryWeatherType) {
-					Log.e("XXX", "wangjun-------refresh finish----");
 					mCallBacks.refreshAllWeatherFinished();
 				} else if (QueryWeatherType.CURRENT == mQueryWeatherType) {
 					mCallBacks.refreshWeatherFinished(mWeatherInfo);

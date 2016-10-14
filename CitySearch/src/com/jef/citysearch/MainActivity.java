@@ -2,16 +2,34 @@ package com.jef.citysearch;
 
 import java.sql.Date;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationListener;
+import com.amap.api.location.AMapLocationClientOption.AMapLocationMode;
+import com.amap.api.location.AMapLocationClientOption.AMapLocationProtocol;
+
+
+
+import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SimpleCursorAdapter.ViewBinder;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -19,13 +37,19 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.RadioGroup.OnCheckedChangeListener;
 
-public class MainActivity extends Activity implements View.OnClickListener{
+public class MainActivity extends Activity implements View.OnClickListener,
+   ActivityCompat.OnRequestPermissionsResultCallback
+   ,OnCheckedChangeListener,
+   CompoundButton.OnCheckedChangeListener{
 	
 	private View mainContentView;
 	private View menuView;
@@ -90,6 +114,28 @@ public class MainActivity extends Activity implements View.OnClickListener{
 		
 	}
 
+	/**
+	 * 需要进行检测的权限数组
+	 */
+	protected String[] needPermissions = {
+			Manifest.permission.ACCESS_COARSE_LOCATION,
+			Manifest.permission.ACCESS_FINE_LOCATION,
+			Manifest.permission.WRITE_EXTERNAL_STORAGE,
+			Manifest.permission.READ_EXTERNAL_STORAGE,
+			Manifest.permission.READ_PHONE_STATE
+			};
+	
+	private static final int PERMISSON_REQUESTCODE = 0;
+	
+	/**
+	 * 判断是否需要检测，防止不停的弹框
+	 */
+	private boolean isNeedCheck = true;
+	
+	private AMapLocationClient locationClient = null;
+	private AMapLocationClientOption locationOption = new AMapLocationClientOption();
+	private TextView tvReult;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
@@ -106,6 +152,10 @@ public class MainActivity extends Activity implements View.OnClickListener{
 				WeatherAction.ACTION_WEATHER_REFRESHED);
 		filter.addAction(WeatherAction.ACTION_WEATHER_REFRESHED_ALL);
 		registerReceiver(mWeatherRefreshedReceiver, filter);
+		
+        initLocation();
+		
+		startLocation();
 	}
 	
 	
@@ -113,6 +163,9 @@ public class MainActivity extends Activity implements View.OnClickListener{
 	@Override
 	protected void onResume() {
 		super.onResume();
+		if(isNeedCheck){
+			checkPermissions(needPermissions);
+		}
 		if (WeatherDataUtil.getInstance()
 				.getNeedUpdateMainUI(MainActivity.this)) {
 			showLoadingProgress(true, R.string.progress_refresh);
@@ -202,6 +255,8 @@ public class MainActivity extends Activity implements View.OnClickListener{
 		progressText = (TextView) findViewById(R.id.progress_text);
 		
 		initMenu();
+		
+		tvReult = (TextView) findViewById(R.id.tv_result);
 	}
 	
 	private void initMenu() {
@@ -632,14 +687,208 @@ public class MainActivity extends Activity implements View.OnClickListener{
 	
 	private void setWeatherFromBD() {
 		mWeatherInfoList = WeatherApp.mModel.getWeatherInfos();
-		//Log.e("XXX", "wangjun------setWeatherFromBD-------mWeatherInfoList.size()=" + mWeatherInfoList.size());
-		//Log.e("XXX", "wangjun--------setWeatherFromBD-----mWeatherInfoList.get(0).getForecasts().size()=" + mWeatherInfoList.get(0).getForecasts().size());
 		if (mWeatherInfoList.size() > 0
 				&& mWeatherInfoList.get(0).getForecasts().size() >= FORECAST_DAY) {
 			updateUI();
 			/*startUpdateService(MainActivity.this, WeatherWidget.ACTION_UPDATE,
 					AppWidgetManager.INVALID_APPWIDGET_ID);*/
 		}
+	}
+	
+	/**
+	 * 
+	 * @param needRequestPermissonList
+	 * @since 2.5.0
+	 *
+	 */
+	private void checkPermissions(String... permissions) {
+		List<String> needRequestPermissonList = findDeniedPermissions(permissions);
+		if (null != needRequestPermissonList
+				&& needRequestPermissonList.size() > 0) {
+			ActivityCompat.requestPermissions(this,
+					needRequestPermissonList.toArray(
+							new String[needRequestPermissonList.size()]),
+					PERMISSON_REQUESTCODE);
+		}
+	}
+
+	/**
+	 * 获取权限集中需要申请权限的列表
+	 * 
+	 * @param permissions
+	 * @return
+	 * @since 2.5.0
+	 *
+	 */
+	private List<String> findDeniedPermissions(String[] permissions) {
+		List<String> needRequestPermissonList = new ArrayList<String>();
+		for (String perm : permissions) {
+			if (ContextCompat.checkSelfPermission(this,
+					perm) != PackageManager.PERMISSION_GRANTED
+					|| ActivityCompat.shouldShowRequestPermissionRationale(
+							this, perm)) {
+				needRequestPermissonList.add(perm);
+			} 
+		}
+		return needRequestPermissonList;
+	}
+
+	/**
+	 * 检测是否说有的权限都已经授权
+	 * @param grantResults
+	 * @return
+	 * @since 2.5.0
+	 *
+	 */
+	private boolean verifyPermissions(int[] grantResults) {
+		for (int result : grantResults) {
+			if (result != PackageManager.PERMISSION_GRANTED) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode,
+			String[] permissions, int[] paramArrayOfInt) {
+		if (requestCode == PERMISSON_REQUESTCODE) {
+			if (!verifyPermissions(paramArrayOfInt)) {
+				showMissingPermissionDialog();
+				isNeedCheck = false;
+			}
+		}
+	}
+
+	/**
+	 * 显示提示信息
+	 * 
+	 * @since 2.5.0
+	 *
+	 */
+	private void showMissingPermissionDialog() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(R.string.notifyTitle);
+		builder.setMessage(R.string.notifyMsg);
+
+		// 拒绝, 退出应用
+		builder.setNegativeButton(R.string.cancel,
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						finish();
+					}
+				});
+
+		builder.setPositiveButton(R.string.setting,
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						startAppSettings();
+					}
+				});
+
+		builder.setCancelable(false);
+
+		builder.show();
+	}
+
+	/**
+	 *  启动应用的设置
+	 * 
+	 * @since 2.5.0
+	 *
+	 */
+	private void startAppSettings() {
+		Intent intent = new Intent(
+				Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+		intent.setData(Uri.parse("package:" + getPackageName()));
+		startActivity(intent);
+	}
+
+
+
+	@Override
+	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+	@Override
+	public void onCheckedChanged(RadioGroup group, int checkedId) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	/**
+	 * 初始化定位
+	 * 
+	 * @since 2.8.0
+	 * @author hongming.wang
+	 *
+	 */
+	private void initLocation(){
+		//初始化client
+		locationClient = new AMapLocationClient(this.getApplicationContext());
+		//设置定位参数
+		locationClient.setLocationOption(getDefaultOption());
+		// 设置定位监听
+		locationClient.setLocationListener(locationListener);
+		
+	}
+	
+	/**
+	 * 默认的定位参数
+	 * @since 2.8.0
+	 * @author hongming.wang
+	 *
+	 */
+	private AMapLocationClientOption getDefaultOption(){
+		AMapLocationClientOption mOption = new AMapLocationClientOption();
+		mOption.setLocationMode(AMapLocationMode.Hight_Accuracy);//可选，设置定位模式，可选的模式有高精度、仅设备、仅网络。默认为高精度模式
+		mOption.setGpsFirst(false);//可选，设置是否gps优先，只在高精度模式下有效。默认关闭
+		mOption.setHttpTimeOut(30000);//可选，设置网络请求超时时间。默认为30秒。在仅设备模式下无效
+		mOption.setInterval(2000);//可选，设置定位间隔。默认为2秒
+		mOption.setNeedAddress(true);//可选，设置是否返回逆地理地址信息。默认是ture
+		mOption.setOnceLocation(false);//可选，设置是否单次定位。默认是false
+		mOption.setOnceLocationLatest(false);//可选，设置是否等待wifi刷新，默认为false.如果设置为true,会自动变为单次定位，持续定位时不要使用
+		AMapLocationClientOption.setLocationProtocol(AMapLocationProtocol.HTTP);//可选， 设置网络请求的协议。可选HTTP或者HTTPS。默认为HTTP
+		
+		return mOption;
+	}
+	
+	/**
+	 * 定位监听
+	 */
+	AMapLocationListener locationListener = new AMapLocationListener() {
+		@Override
+		public void onLocationChanged(AMapLocation loc) {
+			if (null != loc) {
+				//解析定位结果
+				String result = Utils.getLocationStr(loc);
+				tvReult.setText(result);
+			} else {
+				tvReult.setText("定位失败，loc is null");
+			}
+		}
+	};
+	
+	/**
+	 * 开始定位
+	 * 
+	 * @since 2.8.0
+	 * @author hongming.wang
+	 *
+	 */
+	private void startLocation(){
+		//根据控件的选择，重新设置定位参数
+		//resetOption();
+		// 设置定位参数
+		locationClient.setLocationOption(locationOption);
+		// 启动定位
+		locationClient.startLocation();
 	}
 	
 }
