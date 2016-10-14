@@ -10,6 +10,10 @@ package com.jef.citysearch;
 public final class R {
     public static final class attr {
     }
+    public static final class bool {
+        public static final int config_auto_refresh_enable=0x7f060000;
+        public static final int config_wifi_only_enable=0x7f060001;
+    }
     public static final class color {
         public static final int dark=0x7f040006;
         public static final int darkgoldenrod=0x7f040004;
@@ -21,41 +25,41 @@ public final class R {
         public static final int white=0x7f040000;
     }
     public static final class dimen {
-        public static final int add_city_width=0x7f06001c;
-        public static final int bottom_bar_marginTop=0x7f060015;
-        public static final int date_city_text_size=0x7f060005;
-        public static final int forecast_image_size=0x7f06000e;
-        public static final int forecast_item_height=0x7f06000b;
-        public static final int forecast_item_internal_marginBottom=0x7f060010;
-        public static final int forecast_item_line_marginBottom=0x7f060012;
-        public static final int forecast_item_line_marginTop=0x7f060011;
-        public static final int forecast_item_marginBottom=0x7f06000d;
-        public static final int forecast_item_marginTop=0x7f06000c;
-        public static final int forecast_item_text_size=0x7f06000f;
-        public static final int forecast_item_width=0x7f06000a;
-        public static final int gps_view_icon_marginTop=0x7f06001d;
-        public static final int main_ampm_font_size=0x7f060000;
-        public static final int main_container_height=0x7f060008;
-        public static final int menu_item_height=0x7f06001f;
-        public static final int menu_item_marginEnd=0x7f060021;
-        public static final int menu_width=0x7f06001e;
-        public static final int search_text_height=0x7f060016;
-        public static final int sub_menu_item_marginEnd=0x7f060022;
-        public static final int sub_menu_marginStart=0x7f060020;
-        public static final int temp_text_marginBottom=0x7f060013;
-        public static final int temp_text_size=0x7f060007;
-        public static final int title_height=0x7f060002;
-        public static final int title_paddingTop=0x7f060003;
-        public static final int title_textSize=0x7f060004;
-        public static final int weather_date_marginBottom=0x7f060009;
-        public static final int weather_text_marginTop=0x7f060014;
-        public static final int weather_text_size=0x7f060006;
-        public static final int widget_big_font_size=0x7f060001;
-        public static final int widget_date_marginBottom=0x7f06001b;
-        public static final int widget_img_marginLeft=0x7f060017;
-        public static final int widget_img_marginTop=0x7f060018;
-        public static final int widget_time_marginBottom=0x7f06001a;
-        public static final int widget_weatherdata_marginTop=0x7f060019;
+        public static final int add_city_width=0x7f08001c;
+        public static final int bottom_bar_marginTop=0x7f080015;
+        public static final int date_city_text_size=0x7f080005;
+        public static final int forecast_image_size=0x7f08000e;
+        public static final int forecast_item_height=0x7f08000b;
+        public static final int forecast_item_internal_marginBottom=0x7f080010;
+        public static final int forecast_item_line_marginBottom=0x7f080012;
+        public static final int forecast_item_line_marginTop=0x7f080011;
+        public static final int forecast_item_marginBottom=0x7f08000d;
+        public static final int forecast_item_marginTop=0x7f08000c;
+        public static final int forecast_item_text_size=0x7f08000f;
+        public static final int forecast_item_width=0x7f08000a;
+        public static final int gps_view_icon_marginTop=0x7f08001d;
+        public static final int main_ampm_font_size=0x7f080000;
+        public static final int main_container_height=0x7f080008;
+        public static final int menu_item_height=0x7f08001f;
+        public static final int menu_item_marginEnd=0x7f080021;
+        public static final int menu_width=0x7f08001e;
+        public static final int search_text_height=0x7f080016;
+        public static final int sub_menu_item_marginEnd=0x7f080022;
+        public static final int sub_menu_marginStart=0x7f080020;
+        public static final int temp_text_marginBottom=0x7f080013;
+        public static final int temp_text_size=0x7f080007;
+        public static final int title_height=0x7f080002;
+        public static final int title_paddingTop=0x7f080003;
+        public static final int title_textSize=0x7f080004;
+        public static final int weather_date_marginBottom=0x7f080009;
+        public static final int weather_text_marginTop=0x7f080014;
+        public static final int weather_text_size=0x7f080006;
+        public static final int widget_big_font_size=0x7f080001;
+        public static final int widget_date_marginBottom=0x7f08001b;
+        public static final int widget_img_marginLeft=0x7f080017;
+        public static final int widget_img_marginTop=0x7f080018;
+        public static final int widget_time_marginBottom=0x7f08001a;
+        public static final int widget_weatherdata_marginTop=0x7f080019;
     }
     public static final class drawable {
         public static final int add_city=0x7f020000;
@@ -135,25 +139,70 @@ public final class R {
         public static final int widget_preview=0x7f02004a;
     }
     public static final class id {
-        public static final int city_list=0x7f080004;
-        public static final int city_name=0x7f080002;
-        public static final int indicator_bar=0x7f080009;
-        public static final int latest_refresh_time=0x7f08000b;
-        public static final int loading_progress_view=0x7f080005;
-        public static final int main_container=0x7f08000a;
-        public static final int main_content=0x7f080008;
-        public static final int main_layout=0x7f080007;
-        public static final int progressbar=0x7f080006;
-        public static final int refresh=0x7f08000c;
-        public static final int search_bar=0x7f080001;
-        public static final int search_city=0x7f080003;
-        public static final int settings=0x7f08000d;
-        public static final int title=0x7f080000;
+        public static final int add_city=0x7f0a000c;
+        public static final int all_refresh=0x7f0a000e;
+        public static final int city_list=0x7f0a0004;
+        public static final int city_name=0x7f0a0002;
+        public static final int currentTemp=0x7f0a002d;
+        public static final int date_y=0x7f0a0029;
+        public static final int forecast_date=0x7f0a0011;
+        public static final int forecast_day=0x7f0a0010;
+        public static final int forecast_icon=0x7f0a0012;
+        public static final int forecast_item_1=0x7f0a002f;
+        public static final int forecast_item_2=0x7f0a0030;
+        public static final int forecast_item_3=0x7f0a0031;
+        public static final int forecast_item_4=0x7f0a0032;
+        public static final int forecast_text=0x7f0a0014;
+        public static final int forecast_weather=0x7f0a0013;
+        public static final int ic_gps=0x7f0a0008;
+        public static final int image=0x7f0a0009;
+        public static final int indicator_bar=0x7f0a0017;
+        public static final int latest_all_refresh_time=0x7f0a000d;
+        public static final int latest_refresh_time=0x7f0a0019;
+        public static final int loading_progress_view=0x7f0a0005;
+        public static final int location=0x7f0a000f;
+        public static final int main_container=0x7f0a0018;
+        public static final int main_content=0x7f0a0016;
+        public static final int main_gps=0x7f0a002a;
+        public static final int main_layout=0x7f0a0015;
+        public static final int menu=0x7f0a001d;
+        public static final int menu_auto_12h=0x7f0a0022;
+        public static final int menu_auto_24h=0x7f0a0024;
+        public static final int menu_auto_6h=0x7f0a0020;
+        public static final int menu_auto_refresh=0x7f0a001e;
+        public static final int menu_check_auto_12h=0x7f0a0023;
+        public static final int menu_check_auto_24h=0x7f0a0025;
+        public static final int menu_check_auto_6h=0x7f0a0021;
+        public static final int menu_check_auto_refresh=0x7f0a001f;
+        public static final int menu_check_wifi_only=0x7f0a0027;
+        public static final int menu_set_city=0x7f0a0028;
+        public static final int menu_wifi_only=0x7f0a0026;
+        public static final int name=0x7f0a0007;
+        public static final int progress_text=0x7f0a001c;
+        public static final int progressbar=0x7f0a0006;
+        public static final int refresh=0x7f0a001a;
+        public static final int search_bar=0x7f0a0001;
+        public static final int search_city=0x7f0a0003;
+        public static final int settings=0x7f0a001b;
+        public static final int temp=0x7f0a002e;
+        public static final int text=0x7f0a000a;
+        public static final int title=0x7f0a0000;
+        public static final int weather=0x7f0a000b;
+        public static final int weather_icon=0x7f0a002b;
+        public static final int weather_text=0x7f0a002c;
+    }
+    public static final class integer {
+        public static final int config_auto_refresh=0x7f070000;
     }
     public static final class layout {
         public static final int activity_city_search=0x7f030000;
-        public static final int main=0x7f030001;
-        public static final int simple_list_item=0x7f030002;
+        public static final int city_list_item=0x7f030001;
+        public static final int city_manager=0x7f030002;
+        public static final int forecast_item_layout=0x7f030003;
+        public static final int main=0x7f030004;
+        public static final int main_menu=0x7f030005;
+        public static final int simple_list_item=0x7f030006;
+        public static final int weather_info_main=0x7f030007;
     }
     public static final class string {
         public static final int add_city=0x7f050007;
@@ -168,27 +217,28 @@ public final class R {
         public static final int default_woeid=0x7f050000;
         public static final int delete=0x7f050005;
         public static final int delete_city=0x7f050006;
-        public static final int menu_auto_refresh=0x7f050012;
-        public static final int menu_auto_refresh_12h=0x7f050014;
-        public static final int menu_auto_refresh_24h=0x7f050015;
-        public static final int menu_auto_refresh_6h=0x7f050013;
-        public static final int menu_wifi_only=0x7f050016;
+        public static final int menu_auto_refresh=0x7f050013;
+        public static final int menu_auto_refresh_12h=0x7f050015;
+        public static final int menu_auto_refresh_24h=0x7f050016;
+        public static final int menu_auto_refresh_6h=0x7f050014;
+        public static final int menu_wifi_only=0x7f050017;
+        public static final int progress_refresh=0x7f050012;
         public static final int refresh_time=0x7f05000f;
         public static final int toast_net_inavailable=0x7f050011;
         public static final int toast_wifi_only_mode=0x7f050010;
         public static final int update_location_city=0x7f050008;
-        public static final int weather_breezy=0x7f050018;
-        public static final int weather_clear=0x7f05001b;
-        public static final int weather_cloudy=0x7f050017;
+        public static final int weather_breezy=0x7f050019;
+        public static final int weather_clear=0x7f05001c;
+        public static final int weather_cloudy=0x7f050018;
         public static final int weather_data_default=0x7f05000e;
         public static final int weather_not_found=0x7f05000c;
-        public static final int weather_rain=0x7f05001f;
-        public static final int weather_rain_and_snow=0x7f050020;
-        public static final int weather_showers=0x7f05001c;
-        public static final int weather_snow_showers=0x7f05001d;
-        public static final int weather_sunny=0x7f05001a;
-        public static final int weather_thunderstorms=0x7f05001e;
-        public static final int weather_windy=0x7f050019;
+        public static final int weather_rain=0x7f050020;
+        public static final int weather_rain_and_snow=0x7f050021;
+        public static final int weather_showers=0x7f05001d;
+        public static final int weather_snow_showers=0x7f05001e;
+        public static final int weather_sunny=0x7f05001b;
+        public static final int weather_thunderstorms=0x7f05001f;
+        public static final int weather_windy=0x7f05001a;
     }
     public static final class style {
         /** 
@@ -212,11 +262,11 @@ public final class R {
     
  API 14 theme customizations can go here. 
          */
-        public static final int AppBaseTheme=0x7f070000;
+        public static final int AppBaseTheme=0x7f090000;
         /**  Application theme. 
 item name="android:windowTranslucentNavigation">true</item
          */
-        public static final int AppTheme=0x7f070002;
-        public static final int title_style=0x7f070001;
+        public static final int AppTheme=0x7f090002;
+        public static final int title_style=0x7f090001;
     }
 }

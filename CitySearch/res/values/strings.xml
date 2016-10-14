@@ -18,6 +18,7 @@
     <string name="refresh_time">更新时间:\n%1s</string>
     <string name="toast_wifi_only_mode">仅WIFI模式.</string>
     <string name="toast_net_inavailable">网络不可用.</string>
+    <string name="progress_refresh">Updating...</string>
     
     <string name="menu_auto_refresh">自动更新</string>
     <string name="menu_auto_refresh_6h">每6小时</string>

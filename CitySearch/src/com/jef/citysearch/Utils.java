@@ -18,4 +18,16 @@ public class Utils {
 		}
 		return false;
 	}
+	
+	public static boolean isNetworkTypeWifi(Context context) {
+		ConnectivityManager connectivity = (ConnectivityManager) context
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
+		if (connectivity != null) {
+			NetworkInfo info = connectivity.getActiveNetworkInfo();
+			if (info != null && ConnectivityManager.TYPE_WIFI == info.getType()) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

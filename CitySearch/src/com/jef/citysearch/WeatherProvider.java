@@ -69,7 +69,6 @@ public class WeatherProvider extends ContentProvider {
 	@Override
 	public boolean onCreate() {
 		dbHelper = new DBHelper(getContext());
-		Log.e("XXX", "WANGJUN-------------------WeatherProvider");
 		return true;
 	}
 
@@ -209,12 +208,10 @@ public class WeatherProvider extends ContentProvider {
 		public DBHelper(Context context) {
 			super(context, DATABASE_NAME, null, DATEBASE_VERSION_STRING);
 			// TODO Auto-generated constructor stub
-			Log.e("XXX", "WANGJUN-------------------DBHelper");
 		}
 
 		@Override
 		public void onCreate(SQLiteDatabase db) {
-			Log.e("XXX", "WANGJUN-------------------DBHelper---onCreate");
 			db.execSQL("CREATE TABLE " + TABLE_WEATHER + "("
 					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
 					+ "gIndex INTEGER,"

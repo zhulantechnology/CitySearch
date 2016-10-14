@@ -13,6 +13,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.provider.CalendarContract.Instances;
 import android.util.Log;
@@ -55,6 +56,9 @@ public class InternetWorker {
 	
 	public interface CallBacks {
 		void queryCityFinished();
+		void refreshWeatherFinished(WeatherInfo weatherInfo);
+		void queryAddWeatherFinished(WeatherInfo weatherInfo);
+		void refreshAllWeatherFinished();
 	}
 	
 	public void setCallBacks(CallBacks callBacks) {
@@ -75,7 +79,6 @@ public class InternetWorker {
 			if (null != mQueryCityTask && mQueryCityTask.getStatus() == AsyncTask.Status.RUNNING) {
 				mQueryCityTask.cancel(true);
 			}
-			Log.e("XXX","wangjun-----queryCity---start---");
 			mQueryCityTask = new QueryCityTask(cityInfos);
 			mQueryCityTask.execute(name);
 			return true;
@@ -105,11 +108,8 @@ public class InternetWorker {
 		@Override
 		protected Void doInBackground(String... params) {
 			String url =  URL_QUERY_CITY_PART1 + params[0] + URL_QUERY_CITY_PART2;
-			Log.e("XXX","wangjun-----doInBackground---url---" + url);
 			String content = new WebAccessTools(mContext).getWebContent(url);
-			Log.e("XXX","wangjun-----doInBackground---content---" + content);
 			parseCity(content,mCityInfos);
-			Log.e("XXX","wangjun-----doInBackground---mCityInfos---" + mCityInfos);
 			return null;
 		}
 
@@ -130,7 +130,6 @@ public class InternetWorker {
 		if (null == content || content.isEmpty()) {
 			return;
 		}
-		Log.e("XXX","wangjun--------parseCity---");
 		mCityInfos.clear();
 		SAXParserFactory mSaxParserFactory = SAXParserFactory.newInstance();
 		try {
@@ -162,7 +161,6 @@ public class InternetWorker {
 					&& mQueryWeatherTask.getStatus() == AsyncTask.Status.RUNNING) {
 				mQueryWeatherTask.cancel(true);
 			}
-		//Log.e("XXX","queryWeather--------------");
 			mQueryWeatherTask = new QueryWeatherTask(weatherInfo);
 			mQueryWeatherTask.execute();
 			return true;
@@ -172,19 +170,17 @@ public class InternetWorker {
 	}
 	
 	class QueryWeatherTask extends AsyncTask<Void, Void, Void> {
-		private WeatherInfo mwWeatherInfo;
+		private WeatherInfo mWeatherInfo;
 		
 		public QueryWeatherTask(WeatherInfo weatherInfo) {
-			mwWeatherInfo = weatherInfo;
+			mWeatherInfo = weatherInfo;
 		}
 		@Override
 		protected Void doInBackground(Void... params) {
-			String url = URL_QUERY_WEATHER_PART1 + mwWeatherInfo.getWoeid()
+			String url = URL_QUERY_WEATHER_PART1 + mWeatherInfo.getWoeid()
 					+ URL_QUERY_WEATHER_PART2;
-			//Log.e("XXX","QueryWeatherTask----doInBackground-------url----"+ url);
 			String content = new WebAccessTools(mContext).getWebContent(url);
-			parseWeather(content, mwWeatherInfo);
-			//Log.e("XXX","QueryWeatherTask----doInBackground-------mwWeatherInfo----"+ mwWeatherInfo);
+			parseWeather(content, mWeatherInfo);
 			return null;
 		}
 		@Override
@@ -193,15 +189,41 @@ public class InternetWorker {
 			super.onPostExecute(result);
 			
 			if (tempWeatherInfo.getForecasts().size() < 5) {
-				Log.e("XXX", "QueryWeather Failed: " + tempWeatherInfo.getForecasts().size());
+				//do nothing
 			} else {
-				tempWeatherInfo.setName(mwWeatherInfo.getName());
-				mwWeatherInfo.copyInfo(tempWeatherInfo);
+				tempWeatherInfo.setName(mWeatherInfo.getName());
+				mWeatherInfo.copyInfo(tempWeatherInfo);
+
 			}
 			
 			updateFinishedWeatherCount++;
-			
-			mState = State.IDLE;
+			Log.e("XXX", "wangjun-------updateFinishedWeatherCount----" + updateFinishedWeatherCount);
+			Log.e("XXX", "wangjun-------updateWeatherCount----" + updateWeatherCount);
+			if (updateFinishedWeatherCount == updateWeatherCount) {
+				
+				Log.e("XXX", "wangjun-------mQueryWeatherType----" + mQueryWeatherType);
+				if (QueryWeatherType.ALL == mQueryWeatherType) {
+					Log.e("XXX", "wangjun-------refresh finish----");
+					mCallBacks.refreshAllWeatherFinished();
+				} else if (QueryWeatherType.CURRENT == mQueryWeatherType) {
+					mCallBacks.refreshWeatherFinished(mWeatherInfo);
+					
+				} else if (QueryWeatherType.ADD_NEW == mQueryWeatherType){
+
+					if (mWeatherInfo.isGps()) {
+
+						if (mCallBacks != null) {
+							//mCallBacks.queryAddGpsWeatherFinished(mWeatherInfo);
+						}
+					} else {
+						if (mCallBacks != null) {
+							mCallBacks.queryAddWeatherFinished(mWeatherInfo);
+						}
+					}
+				}
+				
+				mState = State.IDLE;
+			}
 		}
 		
 		
@@ -240,6 +262,51 @@ public class InternetWorker {
 		}
 	}
 	
+	public void init() {
+		mWeatherInfoList = WeatherApp.mModel.getWeatherInfos();
+	}
+	
+	public boolean updateWeather(WeatherInfo weatherInfo) {
+
+		if (mState == State.IDLE) {
+			mState = State.WORK_WEATHER;
+			mQueryWeatherType = QueryWeatherType.CURRENT;
+			updateWeatherCount = 1;
+			updateFinishedWeatherCount = 0;
+			
+			if (null != mQueryWeatherTask && 
+					mQueryWeatherTask.getStatus() == AsyncTask.Status.RUNNING) {
+				mQueryWeatherTask.cancel(true);
+			}
+			
+			mQueryWeatherTask = new QueryWeatherTask(weatherInfo);
+			mQueryWeatherTask.execute();
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public boolean updateWeather() {
+		if (mState == State.IDLE) {
+			mState = State.WORK_WEATHER;
+			mQueryWeatherType = QueryWeatherType.ALL;
+			updateWeatherCount = mWeatherInfoList.size();
+			updateFinishedWeatherCount = 0;
+			if (updateWeatherCount == 0) {
+				Intent intent = new Intent(WeatherAction.ACTION_WEATHER_REFRESHED_ALL);
+				mContext.sendBroadcast(intent);
+			} else {
+				for(int i=0; i<updateWeatherCount; i++) {
+					new QueryWeatherTask(mWeatherInfoList.get(i)).execute();
+				}
+			}
+			
+			return true;
+		} else {
+			return false;
+		}
+	}
 }
 
 

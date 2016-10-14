@@ -46,7 +46,6 @@ public class WeatherXMLParser extends DefaultHandler {
 		int textRes;
 		
 		if (null == mWeatherInfo.getCondition().getCode()) {
-			Log.e("XXX", "endDocument-code NULL");
 		} else {
 			weatherCode = Integer.valueOf(mWeatherInfo.getCondition().getCode());
 			textRes = WeatherDataUtil.getInstance().getWeatherTextResByCode(weatherCode);
@@ -88,8 +87,6 @@ public class WeatherXMLParser extends DefaultHandler {
 			for (int i = 0; i < attributes.getLength(); i++) {
 				String qn = attributes.getQName(i);
 				
-		//Log.e("XXX","TAG_CONDITION-----------attributes.getQName(i)----"+ attributes.getQName(i));
-		//Log.e("XXX","TAG_CONDITION-----------attributes.getValue(i)----"+ attributes.getValue(i));
 				if (QNAME_CODE.equals(qn)) {
 					mWeatherInfo.getCondition().setCode(attributes.getValue(i));
 				} else if (QNAME_DATE.equals(qn)) {
@@ -98,14 +95,13 @@ public class WeatherXMLParser extends DefaultHandler {
 					mWeatherInfo.getCondition().setTemp(attributes.getValue(i));
 				} else if (QNAME_TEXT.equals(qn)) {
 					mWeatherInfo.getCondition().setText(attributes.getValue(i));
+					mWeatherInfo.setUpdateTime(System.currentTimeMillis());//wangjun
 				}
 			}
 		} else if (TAG_FORCAST.equals(localName)) {
 			forecast = mWeatherInfo.new Forecast();
 			for (int i = 0; i < attributes.getLength(); i++) {
 				String qn = attributes.getQName(i);
-		//Log.e("XXX","TAG_FORCAST-----------attributes.getQName(i)----"+ attributes.getQName(i));
-		//Log.e("XXX","TAG_FORCAST-----------attributes.getValue(i)----"+ attributes.getValue(i));
 				
 				if (QNAME_CODE.equals(qn)) {
 					forecast.setCode(attributes.getValue(i));
@@ -117,6 +113,8 @@ public class WeatherXMLParser extends DefaultHandler {
 					forecast.setLow(attributes.getValue(i));
 				} else if (QNAME_TEXT.equals(qn)) {
 					forecast.setText(attributes.getValue(i));
+				} else if (QNAME_DATE.equals(qn)) {
+					forecast.setDate(attributes.getValue(i));
 				}
 			}
 			mWeatherInfo.getForecasts().add(forecast);

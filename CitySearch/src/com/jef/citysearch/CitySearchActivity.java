@@ -2,7 +2,12 @@ package com.jef.citysearch;
 
 import java.util.List;
 
+
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -24,6 +29,27 @@ public class CitySearchActivity extends Activity {
 
 	private List<CityInfo> mCityInfos;
 	private ArrayAdapter<String> cityInfoAdapter;
+	private WeatherRefreshedReceiver mWeatherRefreshedReceiver;
+	
+	private class WeatherRefreshedReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (null == intent) {
+				return;
+			}
+			String action = intent.getAction();
+			if (WeatherAction.ACTION_ADD_WEATHER_FINISH.equals(action)) {
+				
+				CitySearchActivity.this.setResult(
+						CityMangerActivity.REQUEST_CODE_CITY_ADD, null);
+				
+				CitySearchActivity.this.finish();
+				showLoadingProgress(false);
+			}
+		}
+
+	}
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -41,7 +67,6 @@ public class CitySearchActivity extends Activity {
 			public void onClick(View v) {
 				if (Utils.isNetworkAvailable(CitySearchActivity.this)) {
 					searchCity();
-					Log.e("XXX","wangjun-----searchCity---start");
 					cityList.setVisibility(View.VISIBLE);// wangjun add
 				} else {
 					Toast.makeText(CitySearchActivity.this,
@@ -63,12 +88,16 @@ public class CitySearchActivity extends Activity {
 					int position, long id) {
 				int length = mCityInfos.size();
 				if (position < length) {
-					Log.e("XXX","wangjun-----position---" + position);
 					addCity(mCityInfos.get(position));
 				}
 				
 			}
 		});
+		
+		mWeatherRefreshedReceiver = new WeatherRefreshedReceiver();
+		IntentFilter filter = new IntentFilter(
+				WeatherAction.ACTION_ADD_WEATHER_FINISH);
+		registerReceiver(mWeatherRefreshedReceiver, filter);
 	}
 	
 	private void addCity(CityInfo info) {
@@ -76,10 +105,8 @@ public class CitySearchActivity extends Activity {
 		cityList.setVisibility(View.GONE);
 		
 		showLoadingProgress(true);
-		//Log.e("XXX","addWeatherByCity-------"
-		//	+ WeatherApp.mModel.addWeatherByCity(info, false));
+
 		if (WeatherApp.mModel.addWeatherByCity(info, false)) {
-			Log.e("XXX","addCity-------set dialog false");
 			showLoadingProgress(false);
 		}
 
@@ -87,7 +114,6 @@ public class CitySearchActivity extends Activity {
 	
 	private void searchCity() {
 		String name = cityName.getText().toString();
-		Log.e("XXX","wangjun-----searchCity---name---" + name);
 		if (name.isEmpty()) {
 			// Any toast?
 		} else {
@@ -109,9 +135,6 @@ public class CitySearchActivity extends Activity {
 				String[] cityInfosStrings = new String[count];
 				for (int i = 0; i < count; i++) {
 					cityInfosStrings[i] = mCityInfos.get(i).toString();
-					Log.d("XXX", "[" + i + "] CityInfo="
-							+ mCityInfos.get(i).getWoeid() + ": "
-							+ mCityInfos.get(i).toString());
 				}
 				cityInfoAdapter = new ArrayAdapter<String>(
 						CitySearchActivity.this,

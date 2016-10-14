@@ -5,6 +5,7 @@ import java.util.List;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 
 public class WeatherInfo implements Parcelable {
@@ -169,6 +170,15 @@ public class WeatherInfo implements Parcelable {
 		}
 		public void setDate(String date) {
 			this.date = date;
+			if (date == null) {
+				return;
+				}
+			String[] sa = date.split(" ");
+			if (sa.length < 2) {
+				this.dateShort = "";
+			} else {
+				this.dateShort = sa[0] + " " + sa[1];
+			}
 		}
 		public String getDateShort() {
 			return dateShort;

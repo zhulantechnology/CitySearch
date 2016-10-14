@@ -40,6 +40,17 @@
             </intent-filter>
         </activity>
         
+        <activity
+            android:name="com.jef.citysearch.CityMangerActivity"
+            android:label="@string/city_manager"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         
         <provider 
             android:name=".WeatherProvider"
