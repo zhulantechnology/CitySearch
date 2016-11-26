@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.security.auth.PrivateCredentialPermission;
+
 import com.jef.citysearch.WeatherInfo.Forecast;
 
 import android.R.bool;
@@ -20,7 +21,7 @@ import android.util.Log;
 
 public class WeatherModel {
 	
-	private Context mApp;
+	private Context mContext;
 	private boolean inited = false;
 	private InternetWorker mInternetWorker;
 	
@@ -42,8 +43,8 @@ public class WeatherModel {
 	}
 	
 	private WeatherModel(Context app) {
-		mApp = app;
-		mInternetWorker = InternetWorker.getInstance(mApp);
+		mContext = app;
+		mInternetWorker = InternetWorker.getInstance(mContext);
 
 		mInternetWorker.setCallBacks(mInternetCallBacks);
 	}
@@ -63,21 +64,29 @@ public class WeatherModel {
 		
 			updateWeatherInfo(weatherInfo);
 			Intent intent = new Intent(WeatherAction.ACTION_WEATHER_REFRESHED);
-			mApp.sendBroadcast(intent);
+			mContext.sendBroadcast(intent);
 			
 		}
 
 		@Override
-		public void queryAddWeatherFinished(WeatherInfo weatherInfo) {
+		public void queryAddWeatherFinished(WeatherInfo weatherInfo, boolean isLocation) {
 			if (weatherInfo.getForecasts().size() < MainActivity.FORECAST_DAY) {
 			} else {
 				if(addWeatherInfoToDb(weatherInfo)) {
 					mWeatherInfoList.add(weatherInfo);
 				}
 			}
-			Intent intent = new Intent(WeatherAction.ACTION_ADD_WEATHER_FINISH);
-			mApp.sendBroadcast(intent);
-			//setAutoRefreshAlarm(mApp);
+			//Intent intent = new Intent(WeatherAction.ACTION_ADD_WEATHER_FINISH);  //ACTION_WEATHER_REFRESHED
+			WeatherDataUtil.getInstance().updateDefaultCityWoeid(mContext,weatherInfo.getWoeid());
+			Intent intent= null;
+			if (isLocation) {
+					intent = new Intent(WeatherAction.ACTION_WEATHER_REFRESHED);
+				} else {
+				intent = new Intent(WeatherAction.ACTION_ADD_WEATHER_FINISH);
+					}
+			
+			mContext.sendBroadcast(intent);
+			//setAutoRefreshAlarm(mContext);
 		}
 
 		@Override
@@ -85,10 +94,21 @@ public class WeatherModel {
 			for(WeatherInfo info:mWeatherInfoList) {
 				updateWeatherInfo(info);
 			}
-			WeatherDataUtil.getInstance().setRefreshTime(mApp, System.currentTimeMillis());
+			WeatherDataUtil.getInstance().setRefreshTime(mContext, System.currentTimeMillis());
 			Intent intent = new Intent(WeatherAction.ACTION_WEATHER_REFRESHED_ALL);
-			mApp.sendBroadcast(intent);
-			//setAutoRefreshAlarm(mApp);
+			mContext.sendBroadcast(intent);
+			//setAutoRefreshAlarm(mContext);
+		}
+
+		@Override
+		public void queryLocationCityFinished() {
+		//	if (mLocationCityInfoUpdatedListener != null) {
+		//		mLocationCityInfoUpdatedListener.updated();
+		//	}
+			if(!mCityInfos.isEmpty()) {
+				WeatherApp.mModel.addWeatherByCity(mCityInfos.get(0), false, true);
+			} 
+			
 		}
 		
 	};
@@ -114,7 +134,7 @@ public class WeatherModel {
 		}
 		
 		//Add to DB
-		ContentResolver mContentResolver = mApp.getContentResolver();
+		ContentResolver mContentResolver = mContext.getContentResolver();
 		Uri uri = Uri.parse(URI_GWEATHER);
 		ContentValues values = new ContentValues();
 		values.put(WeatherProvider.INDEX,
@@ -160,17 +180,19 @@ public class WeatherModel {
 		mInternetWorker.stopQueryCity();
 	}
 	
-	public boolean addWeatherByCity(CityInfo info, boolean isGps) {
+	public boolean addWeatherByCity(CityInfo info, boolean isGps, boolean isLocation) {
 		WeatherInfo weatherInfo = new WeatherInfo();
 		weatherInfo.setWoeid(info.getWoeid());
 		weatherInfo.setName(info.getName());
 		weatherInfo.setGps(isGps);
-		return mInternetWorker.queryWeather(weatherInfo);
+		return mInternetWorker.queryWeather(weatherInfo, isLocation);
 	}
 	
 	public void init() {
-
-		loadWeatherInfos();
+		if (Utils.isNetworkAvailable(mContext)) {
+			// ?¨¨??¦Ì?¦Ì?¨ª??¡§????¨¨?3?¨ºD??
+		}
+		//loadWeatherInfos();
 		mInternetWorker.init();
 	/*	loadGpsCityInfos();
 		*/
@@ -190,17 +212,17 @@ public class WeatherModel {
 		mCityInfoUpdatedListener = listener;
 	}
 	
-	public boolean getCityInfosByNameFromInternet(String cityName) {
+	public boolean getCityInfosByNameFromInternet(String cityName, boolean isLocation) {
 		mCityInfos.clear();
-		return mInternetWorker.queryCity(cityName,mCityInfos);
+		return mInternetWorker.queryCity(cityName,mCityInfos, isLocation);
 	}
-	
+
 	public void addDefaultData() {
 		WeatherInfo info = new WeatherInfo();
-		info.setWoeid(mApp.getResources().getString(R.string.default_woeid));
-		info.setName(mApp.getResources().getString(R.string.default_city_name));
+		info.setWoeid(mContext.getResources().getString(R.string.default_woeid));
+		info.setName(mContext.getResources().getString(R.string.default_city_name));
 		info.setGps(false);
-		info.setUpdateTime(WeatherDataUtil.getInstance().getRefreshTime(mApp));
+		info.setUpdateTime(WeatherDataUtil.getInstance().getRefreshTime(mContext));
 		info.getCondition().setCode("32");
 		info.getCondition().setDate("Fri, 1 Jan 2016 11:00 AM PKT");
 		info.getCondition().setIndex(WeatherProvider.CONDITION_INDEX);
@@ -241,7 +263,7 @@ public class WeatherModel {
 			info.getForecasts().add(forecast);
 		}
 		
-		ContentResolver mContentResolver = mApp.getContentResolver();
+		ContentResolver mContentResolver = mContext.getContentResolver();
 		Uri uri = Uri.parse(URI_GWEATHER);
 		ContentValues values = new ContentValues();
 		values.put(WeatherProvider.INDEX,
@@ -271,8 +293,8 @@ public class WeatherModel {
 		}
 		
 		mWeatherInfoList.add(info);
-		WeatherDataUtil.getInstance().updateDefaultCityWoeid(mApp, info.getWoeid());
-		WeatherDataUtil.getInstance().setDefaultState(mApp, WeatherDataUtil.DEFAULT_STATE_NEED_UPDATE);
+		WeatherDataUtil.getInstance().updateDefaultCityWoeid(mContext, info.getWoeid());
+		WeatherDataUtil.getInstance().setDefaultState(mContext, WeatherDataUtil.DEFAULT_STATE_NEED_UPDATE);
 	}
 	
 	public List<WeatherInfo> getWeatherInfos() {
@@ -286,11 +308,10 @@ public class WeatherModel {
 		WeatherInfo.Forecast forecast = null;
 		mWeatherInfoList.clear();
 		
-		ContentResolver mContentResolver = mApp.getContentResolver();
+		ContentResolver mContentResolver = mContext.getContentResolver();
 		Uri uri = Uri.parse(URI_GWEATHER);
 		Cursor cursor = mContentResolver.query(uri, null, "gIndex=?",
 						new String[] { Integer.toString(WeatherProvider.CONDITION_INDEX)}, null);
-		Log.e("XXX", "-----loadWeatherInfos--------cursor------" + cursor);
 		WeatherInfo info;
 		String woeid = "";
 		if (cursor != null) {
@@ -305,7 +326,6 @@ public class WeatherModel {
 			}
 			cursor.close();
 		}
-		Log.e("XXX", "-----loadWeatherInfos--------mWeatherInfoList.size() ------" + mWeatherInfoList.size() );
 		if (mWeatherInfoList.size() == 0) {
 			return;
 		}
@@ -384,7 +404,7 @@ public class WeatherModel {
 	}
 	
 	public void updateWeatherInfo(WeatherInfo info) {
-		ContentResolver mContentResolver = mApp.getContentResolver();
+		ContentResolver mContentResolver = mContext.getContentResolver();
 		Uri uri = Uri.parse(URI_GWEATHER);
 		ContentValues values = new ContentValues();
 		values.put(WeatherProvider.INDEX,
@@ -438,6 +458,80 @@ public class WeatherModel {
 	
 	public boolean refreshAllWeather() {
 		return mInternetWorker.updateWeather();
+	}
+	
+	
+	public void stopLocationJob() {
+	//	mInternetWorker.stopLocation();
+	}
+	
+	
+	// wangjun add
+	
+	interface OnLocationCityInfoUpdatedListener {
+		void updated();
+	}
+	
+	private OnLocationCityInfoUpdatedListener mLocationCityInfoUpdatedListener;
+	public void setOnLocationCityInfoUpdatedListener(OnLocationCityInfoUpdatedListener listener) {
+		mLocationCityInfoUpdatedListener = listener;
+	}
+	
+	//end
+	
+	public void deleteWeatherInfo(WeatherInfo info) {
+		ContentResolver mContentResolver = mContext.getContentResolver();
+		Uri uri = Uri.parse(URI_GWEATHER);
+		mContentResolver.delete(
+				uri,
+				WeatherProvider.WOEID + "=? AND " + WeatherProvider.GPS
+						+ "=?",
+				new String[] { info.getWoeid(),
+						String.valueOf(info.isGps()?WeatherProvider.FLAG_GPS:0) });
+		
+		mWeatherInfoList.remove(info);
+	}
+	
+	public void deleteWeatherInfo() {
+		ContentResolver mContentResolver = mContext.getContentResolver();
+		Uri uri = Uri.parse(URI_GWEATHER);
+		mContentResolver.delete(
+				uri,
+				WeatherProvider.NAME + "=?",
+				new String[] { "hangzhou",
+						 });
+		
+		//mWeatherInfoList.remove(info);
+	}
+	
+	public String getFirstWeatherFromDB() {
+
+		String woeid=null;
+		ContentResolver mContentResolver = mContext.getContentResolver();
+
+		Uri weatherUri = Uri.parse(URI_GWEATHER);
+		Cursor cursor = mContentResolver.query(weatherUri, null,
+				WeatherProvider.INDEX+"=?", new String[] { Integer
+						.toString(WeatherProvider.CONDITION_INDEX) },
+				null);
+		if (cursor != null) {
+			if (cursor.moveToFirst()) {
+				int cursorIndex = cursor
+						.getColumnIndex(WeatherProvider.GPS);
+
+				boolean isGps = (cursor.getInt(cursorIndex) == WeatherProvider.FLAG_GPS);
+				if (isGps) {
+					woeid = WeatherDataUtil.DEFAULT_WOEID_GPS;
+				} else {
+					cursorIndex = cursor
+							.getColumnIndex(WeatherProvider.WOEID);
+					woeid =	cursor.getString(cursorIndex);
+				}
+			}
+			cursor.close();
+		}
+		
+		return woeid;
 	}
 	
 	

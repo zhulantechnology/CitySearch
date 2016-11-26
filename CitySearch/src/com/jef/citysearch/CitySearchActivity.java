@@ -39,7 +39,7 @@ public class CitySearchActivity extends Activity {
 			}
 			String action = intent.getAction();
 			if (WeatherAction.ACTION_ADD_WEATHER_FINISH.equals(action)) {
-				
+				Log.e("XXX", "CitySearchActivity-------------------onreceive");
 				CitySearchActivity.this.setResult(
 						CityMangerActivity.REQUEST_CODE_CITY_ADD, null);
 				
@@ -95,18 +95,28 @@ public class CitySearchActivity extends Activity {
 		});
 		
 		mWeatherRefreshedReceiver = new WeatherRefreshedReceiver();
-		IntentFilter filter = new IntentFilter(
-				WeatherAction.ACTION_ADD_WEATHER_FINISH);
+		IntentFilter filter = new IntentFilter(WeatherAction.ACTION_ADD_WEATHER_FINISH);
 		registerReceiver(mWeatherRefreshedReceiver, filter);
 	}
 	
+	
+	
+	@Override
+	protected void onStop() {
+		// TODO Auto-generated method stub
+		WeatherApp.mModel.stopQueryCity();
+		super.onStop();
+	}
+
+
+
 	private void addCity(CityInfo info) {
 		WeatherApp.mModel.stopQueryCity();
 		cityList.setVisibility(View.GONE);
 		
 		showLoadingProgress(true);
 
-		if (WeatherApp.mModel.addWeatherByCity(info, false)) {
+		if (WeatherApp.mModel.addWeatherByCity(info, false, false)) {
 			showLoadingProgress(false);
 		}
 
@@ -119,7 +129,7 @@ public class CitySearchActivity extends Activity {
 		} else {
 			showLoadingProgress(true);
 			WeatherApp.mModel.setOnCityInfoUpdatedListener(onCityInfoUpdatedListener);
-			if (!WeatherApp.mModel.getCityInfosByNameFromInternet(name)) {
+			if (!WeatherApp.mModel.getCityInfosByNameFromInternet(name, false)) {
 				showLoadingProgress(false);
 			}
 		}

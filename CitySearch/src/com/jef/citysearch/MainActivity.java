@@ -11,6 +11,7 @@ import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
 import com.amap.api.location.AMapLocationClientOption.AMapLocationMode;
 import com.amap.api.location.AMapLocationClientOption.AMapLocationProtocol;
+import com.jef.citysearch.WeatherModel.OnLocationCityInfoUpdatedListener;
 
 
 
@@ -37,6 +38,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -66,6 +68,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
 	private int defScreen;
 	private TextView refreshTimeText;
 	private List<WeatherInfo> mWeatherInfoList;
+	private LinearLayout noNetwork;
 	
 	public static final int FORECAST_DAY = 5;
 	
@@ -90,6 +93,12 @@ public class MainActivity extends Activity implements View.OnClickListener,
 	public static final int SETTINGS_AUTO_REFRESH_12H = 12;
 	public static final int SETTINGS_AUTO_REFRESH_24H = 24;
 	private WeatherRefreshedReceiver mWeatherRefreshedReceiver;
+
+	private CityInfo locationCityInfo = new CityInfo();
+	
+	private static List<CityInfo> mCityInfos = new ArrayList<CityInfo>();
+	
+	private static boolean needLocation = false;
 	
 	public enum MenuState {
 		OPEN,CLOSE
@@ -106,6 +115,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
 			}
 			String action = intent.getAction();
 			if (WeatherAction.ACTION_WEATHER_REFRESHED.equals(action)) {
+				//deleteDefaultWeather();
+				Log.e("XXX", "mainactivity-------------------onreceive");
 				setWeatherFromDB();
 				showLoadingProgress(false, R.string.progress_refresh);
 			}
@@ -134,7 +145,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
 	
 	private AMapLocationClient locationClient = null;
 	private AMapLocationClientOption locationOption = new AMapLocationClientOption();
-	private TextView tvReult;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -153,13 +163,26 @@ public class MainActivity extends Activity implements View.OnClickListener,
 		filter.addAction(WeatherAction.ACTION_WEATHER_REFRESHED_ALL);
 		registerReceiver(mWeatherRefreshedReceiver, filter);
 		
-        initLocation();
-		
-		startLocation();
+		if (Utils.isNetworkAvailable(MainActivity.this)) {
+			Log.e("XXX", "-----------------------start location");
+			needLocation = true;
+			initLocation();
+			startLocation();
+		}
 	}
 	
 	
 	
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+		
+		
+	}
+
+
+
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -168,6 +191,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
 		}
 		if (WeatherDataUtil.getInstance()
 				.getNeedUpdateMainUI(MainActivity.this)) {
+			Log.e("XXX", "PROGRESS-----------------------11111");
 			showLoadingProgress(true, R.string.progress_refresh);
 			WeatherDataUtil.getInstance().setNeedUpdateMainUI(
 					MainActivity.this, false);
@@ -178,7 +202,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
 		if (menuState == MenuState.CLOSE) {
 			if(null == mWeatherInfoList || mWeatherInfoList.isEmpty()) {
 				refresh.setEnabled(false);
-				finish();
+				//finish();
 			} else if(!refresh.isEnabled()) {
 				if (loadProgressView.getVisibility() != View.VISIBLE) {
 					refresh.setEnabled(true);
@@ -188,9 +212,9 @@ public class MainActivity extends Activity implements View.OnClickListener,
 		} else {
 			if(null == mWeatherInfoList || mWeatherInfoList.isEmpty()) {
 				refresh.setEnabled(false);
-				finish();
+				//finish();
 			}
-		}
+		}	
 	}
 
 
@@ -199,6 +223,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
 	protected void onDestroy() {
 		unregisterReceiver(mWeatherRefreshedReceiver);
 		mWeatherRefreshedReceiver = null;
+		WeatherApp.mModel.stopLocationJob();
 		super.onDestroy();
 	}
 
@@ -211,6 +236,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
 		
 		indicatorBar = (LinearLayout) findViewById(R.id.indicator_bar);
 		refreshTimeText = (TextView) findViewById(R.id.latest_refresh_time);
+		
+		noNetwork = (LinearLayout) findViewById(R.id.no_network);
 
 		refresh = (ImageView) findViewById(R.id.refresh);
 		refresh.setOnClickListener(this);
@@ -256,7 +283,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
 		
 		initMenu();
 		
-		tvReult = (TextView) findViewById(R.id.tv_result);
 	}
 	
 	private void initMenu() {
@@ -353,10 +379,34 @@ public class MainActivity extends Activity implements View.OnClickListener,
 	private void setWeatherFromDB() {
 		mWeatherInfoList = WeatherApp.mModel.getWeatherInfos();
 		
-		if (mWeatherInfoList.size() > 0 
+		if (mWeatherInfoList.size() == 0 && !Utils.isNetworkAvailable(MainActivity.this)) {
+			mainContentView.setVisibility(View.GONE);
+			noNetwork.setVisibility(View.VISIBLE);
+		} else if (mWeatherInfoList.size() > 0 
 				&& mWeatherInfoList.get(0).getForecasts().size() >= FORECAST_DAY) {
-				updateUI();
+			mainContentView.setVisibility(View.VISIBLE);
+			noNetwork.setVisibility(View.GONE);
+			updateUI();
+		} else if (mWeatherInfoList.size() > 0 && !Utils.isNetworkAvailable(MainActivity.this)) {
+			showLoadingProgress(false, R.string.progress_refresh);
 		}
+	}
+	
+	private WeatherInfo deleWeatherInfo = new WeatherInfo();
+
+	private void deleteDefaultWeather() {
+		mWeatherInfoList = WeatherApp.mModel.getWeatherInfos();
+		if (mWeatherInfoList.size() > 1) {
+			for (WeatherInfo weatherInfo : mWeatherInfoList) {
+				if (weatherInfo.getWoeid().equals("2132574")) {
+					deleWeatherInfo = weatherInfo;
+					//WeatherApp.mModel.deleteWeatherInfo(weatherInfo);
+				}
+			
+
+			}
+		}
+		WeatherApp.mModel.deleteWeatherInfo(deleWeatherInfo);
 	}
 	
 	private void updateUI() {
@@ -373,6 +423,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
 		weatherInfoMainContainer.removeAllViews();
 		for (int i = 0; i < mWeatherInfoList.size(); i++) {
 			info = mWeatherInfoList.get(i);
+			
 			if (defWoeid.equals(info.getWoeid())) {
 				defScreen = i;
 			}
@@ -642,6 +693,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
 	}
 	
 	private void setWeatherFromInternet() {
+		Log.e("XXX", "PROGRESS-----------------------2222");
 		showLoadingProgress(true,R.string.progress_refresh);
 		if (!WeatherApp.mModel.refreshWeather(mWeatherInfoList.get(defScreen))) {
 			showLoadingProgress(false, R.string.progress_refresh);
@@ -822,16 +874,10 @@ public class MainActivity extends Activity implements View.OnClickListener,
 		
 	}
 	
-	/**
-	 * 初始化定位
-	 * 
-	 * @since 2.8.0
-	 * @author hongming.wang
-	 *
-	 */
+	// 高德定位  begin
 	private void initLocation(){
 		//初始化client
-		locationClient = new AMapLocationClient(this.getApplicationContext());
+		locationClient = new AMapLocationClient(MainActivity.this);
 		//设置定位参数
 		locationClient.setLocationOption(getDefaultOption());
 		// 设置定位监听
@@ -847,18 +893,19 @@ public class MainActivity extends Activity implements View.OnClickListener,
 	 */
 	private AMapLocationClientOption getDefaultOption(){
 		AMapLocationClientOption mOption = new AMapLocationClientOption();
-		mOption.setLocationMode(AMapLocationMode.Hight_Accuracy);//可选，设置定位模式，可选的模式有高精度、仅设备、仅网络。默认为高精度模式
-		mOption.setGpsFirst(false);//可选，设置是否gps优先，只在高精度模式下有效。默认关闭
+		//mOption.setLocationMode(AMapLocationMode.Hight_Accuracy);//可选，设置定位模式，可选的模式有高精度、仅设备、仅网络。默认为高精度模式
+		//mOption.setGpsFirst(false);//可选，设置是否gps优先，只在高精度模式下有效。默认关闭
 		mOption.setHttpTimeOut(30000);//可选，设置网络请求超时时间。默认为30秒。在仅设备模式下无效
-		mOption.setInterval(2000);//可选，设置定位间隔。默认为2秒
-		mOption.setNeedAddress(true);//可选，设置是否返回逆地理地址信息。默认是ture
-		mOption.setOnceLocation(false);//可选，设置是否单次定位。默认是false
-		mOption.setOnceLocationLatest(false);//可选，设置是否等待wifi刷新，默认为false.如果设置为true,会自动变为单次定位，持续定位时不要使用
+		mOption.setInterval(10000);//可选，设置定位间隔。默认为2秒
+		//mOption.setNeedAddress(true);//可选，设置是否返回逆地理地址信息。默认是ture
+		//mOption.setOnceLocation(true);//可选，设置是否单次定位。默认是false
+		//mOption.setOnceLocationLatest(false);//可选，设置是否等待wifi刷新，默认为false.如果设置为true,会自动变为单次定位，持续定位时不要使用
 		AMapLocationClientOption.setLocationProtocol(AMapLocationProtocol.HTTP);//可选， 设置网络请求的协议。可选HTTP或者HTTPS。默认为HTTP
 		
 		return mOption;
 	}
 	
+	public static String getLocationCityName;
 	/**
 	 * 定位监听
 	 */
@@ -866,23 +913,59 @@ public class MainActivity extends Activity implements View.OnClickListener,
 		@Override
 		public void onLocationChanged(AMapLocation loc) {
 			if (null != loc) {
-				//解析定位结果
-				String result = Utils.getLocationStr(loc);
-				tvReult.setText(result);
+				if (loc.getCity().length() > 0 && needLocation) {
+					getLocationCityName = loc.getCity();
+					needLocation = false;
+					stopLocation();
+					searchLocationCity(getLocationCityName);
+				}
 			} else {
-				tvReult.setText("定位失败，loc is null");
 			}
 		}
 	};
 	
-	/**
-	 * 开始定位
-	 * 
-	 * @since 2.8.0
-	 * @author hongming.wang
-	 *
-	 */
-	private void startLocation(){
+	
+	private void searchLocationCity(String locationCityName) {
+		if (locationCityName.isEmpty()) {
+			// Any toast?
+		} else {
+			Log.e("XXX", "PROGRESS-----------------------3333");
+			showLoadingProgress(true, R.string.progress_refresh);
+			WeatherApp.mModel.setOnLocationCityInfoUpdatedListener(locationSearchCityListener);
+			
+			boolean searchResult = WeatherApp.mModel.getCityInfosByNameFromInternet(locationCityName, true);
+			if (searchResult) {
+				//showLoadingProgress(false, R.string.progress_refresh);
+			}
+			
+		}
+	}
+	
+	WeatherModel.OnLocationCityInfoUpdatedListener locationSearchCityListener = 
+			new WeatherModel.OnLocationCityInfoUpdatedListener() {
+		
+		@Override
+		public void updated() {
+			mCityInfos = WeatherApp.mModel.getCityInfos();
+			
+			if(!mCityInfos.isEmpty()) {
+				final int count = mCityInfos.size();
+				String[] cityInfosStrings = new String[count];
+				for (int i = 0; i < count; i++) {
+					cityInfosStrings[i] = mCityInfos.get(i).toString();
+				}
+
+			} else {
+				Toast.makeText(getApplicationContext(),
+						getResources().getString(R.string.city_not_found),
+						Toast.LENGTH_SHORT).show();
+			}
+		}
+	};
+	
+	
+	
+	public void startLocation(){
 		//根据控件的选择，重新设置定位参数
 		//resetOption();
 		// 设置定位参数
@@ -891,39 +974,12 @@ public class MainActivity extends Activity implements View.OnClickListener,
 		locationClient.startLocation();
 	}
 	
+	public void stopLocation(){
+
+		locationClient.stopLocation();
+	}
+	// 高德定位 end
+
+	
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -12,6 +12,13 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationClientOption.AMapLocationMode;
+import com.amap.api.location.AMapLocationClientOption.AMapLocationProtocol;
+import com.amap.api.location.AMapLocationListener;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -28,6 +35,8 @@ public class InternetWorker {
 	private Context mContext;
 	
 	private QueryWeatherTask mQueryWeatherTask;
+	
+	private List<CityInfo> locationCityInfos;
 			
 	enum State{
 		IDLE, WORK_WEATHER, WORK_CITY, WORK_LOCATION
@@ -45,8 +54,15 @@ public class InternetWorker {
 	private QueryCityTask mQueryCityTask;
 	private static InternetWorker INSTANCE;
 	
+	private String locationCityName = null;
+	
 	private int updateWeatherCount = 0;
 	private int updateFinishedWeatherCount = 0;
+	
+	private boolean isNeedCheck = true;
+	
+	private AMapLocationClient locationClient = null;
+	private AMapLocationClientOption locationOption = new AMapLocationClientOption();
 	
 	private InternetWorker(Context context) {
 		mContext = context;
@@ -57,14 +73,30 @@ public class InternetWorker {
 	public interface CallBacks {
 		void queryCityFinished();
 		void refreshWeatherFinished(WeatherInfo weatherInfo);
-		void queryAddWeatherFinished(WeatherInfo weatherInfo);
+		void queryAddWeatherFinished(WeatherInfo weatherInfo, boolean isLocation);
 		void refreshAllWeatherFinished();
+
+		void queryLocationCityFinished();
 	}
 	
 	public void setCallBacks(CallBacks callBacks) {
 		mCallBacks = callBacks;
 	}
 	
+	
+	
+	public String getLocationCityName() {
+		return locationCityName;
+	}
+
+
+
+	public void setLocationCityName(String locationCityName) {
+		this.locationCityName = locationCityName;
+	}
+
+
+
 	public static InternetWorker getInstance(Context context) {
 		if (null == INSTANCE) {
 			INSTANCE = new InternetWorker(context);
@@ -73,12 +105,21 @@ public class InternetWorker {
 		return INSTANCE;
 	}
 	
-	public boolean queryCity(String name, List<CityInfo> cityInfos) {
+	public boolean queryCity(String name, List<CityInfo> cityInfos, boolean isLocation) {
+		
+		State tempState = mState;
 		if (mState == State.IDLE) {
-			mState = State.WORK_CITY;
+		//if (true) {
+			if (isLocation) {
+				mState = State.WORK_LOCATION;
+			} else {
+				mState = State.WORK_CITY;
+			}
+			
 			if (null != mQueryCityTask && mQueryCityTask.getStatus() == AsyncTask.Status.RUNNING) {
 				mQueryCityTask.cancel(true);
 			}
+			Log.e("XXX", "WANGJUN-----queryCity------");
 			mQueryCityTask = new QueryCityTask(cityInfos);
 			mQueryCityTask.execute(name);
 			return true;
@@ -116,11 +157,18 @@ public class InternetWorker {
 		@Override
 		protected void onPostExecute(Void result) {
 			// TODO Auto-generated method stub
+			
 			super.onPostExecute(result);
 			if (null != mCallBacks) {
-				mCallBacks.queryCityFinished();
+				if (mState == State.WORK_LOCATION) {
+					mState = State.IDLE;
+					mCallBacks.queryLocationCityFinished();
+				} else {
+					mState = State.IDLE;
+					mCallBacks.queryCityFinished();
+				}
+				
 			}
-			mState = State.IDLE;
 		}
 		
 		
@@ -150,8 +198,9 @@ public class InternetWorker {
 		}
 	}
 	
-	public boolean queryWeather(WeatherInfo weatherInfo) {
+	public boolean queryWeather(WeatherInfo weatherInfo, boolean isLocation) {
 		if (mState == State.IDLE) {
+		//if (true) {
 			mState = State.WORK_WEATHER;
 			mQueryWeatherType = QueryWeatherType.ADD_NEW;
 			updateWeatherCount = 1;
@@ -161,7 +210,7 @@ public class InternetWorker {
 					&& mQueryWeatherTask.getStatus() == AsyncTask.Status.RUNNING) {
 				mQueryWeatherTask.cancel(true);
 			}
-			mQueryWeatherTask = new QueryWeatherTask(weatherInfo);
+			mQueryWeatherTask = new QueryWeatherTask(weatherInfo, isLocation);
 			mQueryWeatherTask.execute();
 			return true;
 		} else {
@@ -171,9 +220,11 @@ public class InternetWorker {
 	
 	class QueryWeatherTask extends AsyncTask<Void, Void, Void> {
 		private WeatherInfo mWeatherInfo;
+		private boolean mLocation;
 		
-		public QueryWeatherTask(WeatherInfo weatherInfo) {
+		public QueryWeatherTask(WeatherInfo weatherInfo, boolean isLocation) {
 			mWeatherInfo = weatherInfo;
+			mLocation = isLocation;
 		}
 		@Override
 		protected Void doInBackground(Void... params) {
@@ -181,13 +232,14 @@ public class InternetWorker {
 					+ URL_QUERY_WEATHER_PART2;
 			String content = new WebAccessTools(mContext).getWebContent(url);
 			parseWeather(content, mWeatherInfo);
+			
 			return null;
 		}
 		@Override
 		protected void onPostExecute(Void result) {
 			// TODO Auto-generated method stub
+			mState = State.IDLE;
 			super.onPostExecute(result);
-			
 			if (tempWeatherInfo.getForecasts().size() < 5) {
 				//do nothing
 			} else {
@@ -195,7 +247,6 @@ public class InternetWorker {
 				mWeatherInfo.copyInfo(tempWeatherInfo);
 
 			}
-			
 			updateFinishedWeatherCount++;
 			if (updateFinishedWeatherCount == updateWeatherCount) {
 				
@@ -213,13 +264,14 @@ public class InternetWorker {
 						}
 					} else {
 						if (mCallBacks != null) {
-							mCallBacks.queryAddWeatherFinished(mWeatherInfo);
+							mCallBacks.queryAddWeatherFinished(mWeatherInfo, mLocation);
 						}
 					}
 				}
 				
-				mState = State.IDLE;
+				
 			}
+			
 		}
 		
 		
@@ -259,6 +311,13 @@ public class InternetWorker {
 	}
 	
 	public void init() {
+		/*
+		initLocation();
+		startLocation();
+		if(getLocationCityName() != null) {
+			queryCity(getLocationCityName(),locationCityInfos);
+
+		}*/
 		mWeatherInfoList = WeatherApp.mModel.getWeatherInfos();
 	}
 	
@@ -275,7 +334,7 @@ public class InternetWorker {
 				mQueryWeatherTask.cancel(true);
 			}
 			
-			mQueryWeatherTask = new QueryWeatherTask(weatherInfo);
+			mQueryWeatherTask = new QueryWeatherTask(weatherInfo, false);
 			mQueryWeatherTask.execute();
 			return true;
 		} else {
@@ -294,7 +353,7 @@ public class InternetWorker {
 				mContext.sendBroadcast(intent);
 			} else {
 				for(int i=0; i<updateWeatherCount; i++) {
-					new QueryWeatherTask(mWeatherInfoList.get(i)).execute();
+					new QueryWeatherTask(mWeatherInfoList.get(i), false).execute();
 				}
 			}
 			
@@ -303,6 +362,8 @@ public class InternetWorker {
 			return false;
 		}
 	}
+	
+
 }
 
 

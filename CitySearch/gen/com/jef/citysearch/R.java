@@ -162,7 +162,7 @@ public final class R {
         public static final int loading_progress_view=0x7f0a0005;
         public static final int location=0x7f0a000f;
         public static final int main_container=0x7f0a0019;
-        public static final int main_content=0x7f0a0016;
+        public static final int main_content=0x7f0a0017;
         public static final int main_gps=0x7f0a002b;
         public static final int main_layout=0x7f0a0015;
         public static final int menu=0x7f0a001e;
@@ -178,6 +178,7 @@ public final class R {
         public static final int menu_set_city=0x7f0a0029;
         public static final int menu_wifi_only=0x7f0a0027;
         public static final int name=0x7f0a0007;
+        public static final int no_network=0x7f0a0016;
         public static final int progress_text=0x7f0a001d;
         public static final int progressbar=0x7f0a0006;
         public static final int refresh=0x7f0a001b;
@@ -187,7 +188,6 @@ public final class R {
         public static final int temp=0x7f0a002f;
         public static final int text=0x7f0a000a;
         public static final int title=0x7f0a0000;
-        public static final int tv_result=0x7f0a0017;
         public static final int weather=0x7f0a000b;
         public static final int weather_icon=0x7f0a002c;
         public static final int weather_text=0x7f0a002d;

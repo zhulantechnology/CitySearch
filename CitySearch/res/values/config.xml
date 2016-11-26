@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="default_woeid" translatable="false">2151849</string>
-    <string name="default_city_name" translatable="false">Shanghai</string>
+    <string name="default_woeid" translatable="false">2132574</string>
+    <string name="default_city_name" translatable="false">hangzhou</string>
     <string name="default_refresh_time" translatable="false">20160101000000</string>
     
     <bool name="config_auto_refresh_enable">false</bool>

@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -17,6 +19,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -351,10 +354,84 @@ public class CityMangerActivity extends Activity {
 
 		mCityListAdapter = new CityListAdapter(CityMangerActivity.this, items);
 		cityList.setAdapter(mCityListAdapter);
-		// cityList.setOnItemLongClickListener(longClickListener);
+		cityList.setOnItemLongClickListener(longClickListener);
 
 		setRefreshTime();
 	}
+	
+	AdapterView.OnItemLongClickListener longClickListener = new AdapterView.OnItemLongClickListener() {
+
+		@Override
+		public boolean onItemLongClick(AdapterView<?> parent, View view,
+				int position, long id) {
+			deletePosition = position;
+
+			String title = getResources().getString(R.string.delete_city,
+					items.get(position).name);
+			final AlertDialog dialog = new AlertDialog.Builder(
+					CityMangerActivity.this,
+					AlertDialog.THEME_DEVICE_DEFAULT_LIGHT)
+					.setTitle(title)
+					.setPositiveButton(android.R.string.ok,
+							new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog,
+										int which) {
+									CityListItem item = items.get(deletePosition);
+									for(WeatherInfo info:mWeatherInfoList) {
+										if (item.isGps && info.isGps()) {
+											WeatherApp.mModel.deleteWeatherInfo(info);
+											break;
+										} else if (!item.isGps && !info.isGps() && (info.getWoeid().equals(item.woeid))) {
+											WeatherApp.mModel.deleteWeatherInfo(info);
+											break;
+										}
+									}
+									
+									String defaultWoeid = WeatherDataUtil
+											.getInstance().getDefaultCityWoeid(
+													CityMangerActivity.this);
+
+									if ((!item.isGps
+											&& defaultWoeid.equals(items
+													.get(deletePosition).woeid) && !defaultWoeid
+												.equals(WeatherDataUtil.DEFAULT_WOEID_GPS))
+											|| (item.isGps && defaultWoeid
+													.equals(WeatherDataUtil.DEFAULT_WOEID_GPS))) {
+										WeatherDataUtil
+												.getInstance()
+												.updateDefaultCityWoeid(
+														CityMangerActivity.this,
+														"");
+
+										String firstWoeid = WeatherApp.mModel
+												.getFirstWeatherFromDB();
+										if (null != firstWoeid) {
+											WeatherDataUtil
+													.getInstance()
+													.updateDefaultCityWoeid(
+															CityMangerActivity.this,
+															firstWoeid);
+										}
+
+/*										startUpdateService(
+												CityMangerActivity.this,
+												WeatherWidget.ACTION_UPDATE,
+												AppWidgetManager.INVALID_APPWIDGET_ID);*/
+									}
+
+									refreshCityList();
+									WeatherDataUtil.getInstance()
+											.setNeedUpdateMainUI(
+													CityMangerActivity.this,
+													true);
+								}
+							}).setNeutralButton(android.R.string.cancel, null)
+					.create();
+			dialog.show();
+			return true;
+		}
+	};
 
 	private void setRefreshTime() {
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
